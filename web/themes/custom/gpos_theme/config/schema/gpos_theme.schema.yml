@@ -1,0 +1,5 @@
+# Schema for the configuration files of the gpos_theme theme.
+
+gpos_theme.settings:
+  type: theme_settings
+  label: 'gpos_theme settings'
