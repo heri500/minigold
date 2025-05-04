@@ -1,0 +1,7 @@
+name: Data Product
+type: module
+description: Module untuk mengelola Data Product
+package: Minigold
+core_version_requirement: ^9 || ^10 || ^11
+dependencies:
+  - data_source

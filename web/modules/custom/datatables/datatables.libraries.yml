@@ -1,0 +1,44 @@
+datatables:
+  version: VERSION
+  js:
+    js/datatables.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/drupalSettings
+    - core/once
+    - datatables/datatables.net
+
+datatables.net:
+  remote: https://datatables.net/
+  version: 2.0.1
+  license:
+    name: MIT
+    url: https://datatables.net/license/mit
+    gpl-compatible: true
+  js:
+    /libraries/datatables/datatables.min.js: {}
+  css:
+    component:
+      /libraries/datatables/datatables.min.css: {}
+  dependencies:
+    - core/jquery
+
+datatables.default:
+  version: VERSION
+  css:
+    theme:
+      css/datatables.css: {}
+
+datatables.tabletools:
+  version: VERSION
+  js:
+    /libraries/datatables/extensions/Buttons/js/dataTables.buttons.min.js: {}
+    /libraries/datatables/extensions/Buttons/js/buttons.html5.min.js: {}
+    /libraries/datatables/extensions/Buttons/js/buttons.print.min.js: {}
+    /libraries/datatables/extensions/Buttons/js/buttons.colVis.min.js: {}
+  css:
+    component:
+      /libraries/datatables/extensions/Buttons/css/buttons.dataTables.min.css: {}
+  dependencies:
+    - datatables/datatables

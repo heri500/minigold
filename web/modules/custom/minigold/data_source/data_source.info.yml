@@ -1,0 +1,5 @@
+name: Data Source
+type: module
+description: Data Source dalam json untuk semua module
+package: Minigold
+core_version_requirement: ^9 || ^10 || ^11

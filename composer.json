@@ -19,6 +19,8 @@
         "drupal/core-composer-scaffold": "^11.1",
         "drupal/core-project-message": "^11.1",
         "drupal/core-recommended": "^11.1",
+        "drupal/devel": "^5.3",
+        "drupal/fontawesome": "^3.0",
         "drupal/radix": "^6.0",
         "drush/drush": "^13.6"
     },

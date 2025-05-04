@@ -1,0 +1,9 @@
+name: Current Page Crumb
+type: module
+description: Add the current page title to the breadcrumb.
+core_version_requirement: ^9.1 || ^10 || ^11
+
+# Information added by Drupal.org packaging script on 2025-03-04
+version: '8.x-1.6'
+project: 'current_page_crumb'
+datestamp: 1741117425

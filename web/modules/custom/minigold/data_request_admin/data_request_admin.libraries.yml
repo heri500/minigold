@@ -1,0 +1,19 @@
+datarequestadmin_js:
+  version: 1.x
+  js:
+    js/datarequestadmin.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/drupal.ajax
+
+form_request_admin:
+  version: 1.x
+  js:
+    js/formrequestadmin.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/drupal.ajax
+    - core/jquery.form
+    - core/once

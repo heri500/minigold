@@ -1,0 +1,10 @@
+data_source.get_data:
+  path: '/datasource/getdata/{table_name}'
+  defaults:
+    _controller: '\Drupal\data_source\Controller\DatasourceController::getData'
+    _title: 'Data Source'
+    table_name: null
+  requirements:
+    _permission: 'access data source'
+  options:
+    no_cache: TRUE

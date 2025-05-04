@@ -1,0 +1,8 @@
+name: 'Data Request Admin'
+type: module
+description: 'Module yang menangani request untuk cetak produk dari admin ke bagian stok'
+package: Minigold
+core_version_requirement: ^10 || ^11
+dependencies:
+  - data_product:data_product
+  - data_source:data_source

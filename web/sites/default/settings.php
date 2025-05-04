@@ -883,4 +883,14 @@ $databases['default']['default'] = array (
   'namespace' => 'Drupal\\mysql\\Driver\\Database\\mysql',
   'autoload' => 'core/modules/mysql\\src\\Driver\\Database\\mysql\\',
 );
+// PostgreSQL Database Configuration
+$databases['minigold_master']['default'] = [
+  'database' => 'minigold',
+  'username' => 'postgres',
+  'password' => 'abuya313',
+  'host' => '127.0.0.1',
+  'port' => '5432',
+  'driver' => 'pgsql',
+  'prefix' => '',
+];
 $settings['config_sync_directory'] = 'sites/default/files/config_3gIbk5Cv3SNMuae2txVfdlqgtLs0q9pd0H96pOIb3As-gGxNwwlN_ahs0xZPS4bd6xI4IpnO5g/sync';

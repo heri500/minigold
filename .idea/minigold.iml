@@ -37,6 +37,9 @@
       <sourceFolder url="file://$MODULE_DIR$/web/core/tests/Drupal/FunctionalTests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/web/core/tests/Drupal/KernelTests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/web/core/tests/Drupal/Tests" isTestSource="true" />
+      <excludeFolder url="file://$MODULE_DIR$/vendor/doctrine/common" />
+      <excludeFolder url="file://$MODULE_DIR$/vendor/doctrine/event-manager" />
+      <excludeFolder url="file://$MODULE_DIR$/vendor/doctrine/persistence" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/psr/http-client" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/chi-teck/drupal-code-generator" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/consolidation/annotated-command" />

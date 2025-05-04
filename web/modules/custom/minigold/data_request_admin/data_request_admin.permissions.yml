@@ -1,0 +1,7 @@
+access request admin:
+  title: 'access request admin'
+  description: 'Hak akses untuk melihat tabel request admin'
+
+administer request admin:
+  title: 'administer request admin'
+  description: 'Hak akses untuk me manage data request admin'

@@ -1,0 +1,8 @@
+dataproduct_js:
+  version: 1.x
+  js:
+    js/dataproduct.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/drupal.ajax

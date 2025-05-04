@@ -9,6 +9,7 @@
         <option value="$PROJECT_DIR$/web/core/tests/Drupal/FunctionalTests" />
         <option value="$PROJECT_DIR$/web/core/tests/Drupal/FunctionalJavascriptTests" />
         <option value="$PROJECT_DIR$/web/core/tests/Drupal/BuildTests" />
+        <option value="$PROJECT_DIR$/web/core/tests/PHPStan/tests" />
       </list>
     </option>
   </component>

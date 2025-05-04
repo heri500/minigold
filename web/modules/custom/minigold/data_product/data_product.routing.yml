@@ -1,0 +1,20 @@
+data_product.table:
+  path: '/dataproduct/table'
+  defaults:
+    _controller: '\Drupal\data_product\Controller\DataProductController::Table'
+    _title: 'Data Product'
+  requirements:
+    _permission: 'access data product'
+  options:
+    no_cache: TRUE
+
+data_product.add_product:
+  path: '/dataproduct/add/{id}'
+  defaults:
+    _controller: 'Drupal\data_product\Controller\DataProductController::addProductForm'
+  requirements:
+    _permission: 'admin data product'
+    id: '\d+'  # Ensure ID is a number
+  options:
+    no_cache: TRUE
+

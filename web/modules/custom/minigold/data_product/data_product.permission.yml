@@ -1,0 +1,6 @@
+'access data product':
+  title: access data product
+  description: Allow users to access data product
+'admin data product':
+  title: create and modify data product
+  description: Allow users to create and modify data product

@@ -1,0 +1,35 @@
+data_request_admin.table:
+  path: '/data-request-admin/table'
+  defaults:
+    _title: 'Tabel Request Admin'
+    _controller: '\Drupal\data_request_admin\Controller\DataRequestAdminController'
+  requirements:
+    _permission: 'access request admin'
+
+data_request_admin.add_request_admin:
+  path: '/data-request-admin/add-request-admin'
+  defaults:
+    _title: 'Add Request Admin'
+    _form: 'Drupal\data_request_admin\Form\AddRequestAdmin'
+  requirements:
+    _permission: 'administer request admin'
+
+data_request_admin.add_ajax:
+  path: '/data-request-admin/add/{id}'
+  defaults:
+    _controller: 'Drupal\data_request_admin\Controller\DataRequestAdminController::addRequestForm'
+  requirements:
+    _permission: 'administer request admin'
+    id: '\d+'  # Ensure ID is a number
+  options:
+    no_cache: TRUE
+
+data_request_admin.product_autocomplete:
+  path: '/data-request-admin/product-autocomplete'
+  defaults:
+    _controller: '\Drupal\data_request_admin\Controller\ProductAutocompleteController::handleAutocomplete'
+    _format: json
+  requirements:
+    _permission: 'access request admin'
+  options:
+    no_cache: TRUE

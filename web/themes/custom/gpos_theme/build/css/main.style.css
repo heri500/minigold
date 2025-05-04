@@ -4,7 +4,7 @@
  * Variables should follow the $component-state-property-size formula for
  * consistent naming. Examples:
  * $nav-link-disabled-color
- * $modal-content-box-shadow-xs 
+ * $modal-content-box-shadow-xs
  *
  * Customization:
  * To customize Bootstrap variables:
@@ -197,7 +197,7 @@
  * Variables should follow the $component-state-property-size formula for
  * consistent naming. Examples:
  * $nav-link-disabled-color
- * $modal-content-box-shadow-xs 
+ * $modal-content-box-shadow-xs
  *
  * Customization:
  * To customize Bootstrap variables:
@@ -12578,3 +12578,76 @@ textarea.form-control-lg {
 }
 
 /*# sourceMappingURL=main.style.css.map*/
+
+.navbar {
+  background-image: linear-gradient(rgb(0 0 0), rgb(2 2 2 / 52%)) !important;
+  box-shadow: 0 0.2rem 0.45rem rgba(0, 0, 0, 0.15), inset 0 -1px 0 rgba(255, 255, 255, 0.15) !important;
+}
+.navbar-nav .nav-link.active, .navbar-nav .nav-link.show {
+  color: var(--bs-highlight-bg);
+  font-weight: 500;
+}
+.modal-header{
+  background-image: linear-gradient(rgb(2 2 2 / 52%), rgb(0 0 0)) !important;
+  box-shadow: 0 0.1rem 0.25rem rgba(0, 0, 0, 0.15), inset 0 -1px 0 rgba(255, 255, 255, 0.25) !important;
+  color: var(--bs-body-bg);
+  font-weight: 500;
+}
+.modal-header .modal-title{
+  font-size: 18px;
+}
+.navbar-nav .nav-link{
+  color: var(--bs-body-bg);
+}
+.navbar-brand__logo img{
+  width : 45px !important;
+}
+.modal-md-custom {
+  --bs-modal-width: 650px !important;
+}
+.input-group .form-control {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.input-group-text {
+  align-items: start !important;
+  font-size: 14px !important;
+  font-weight: 500;
+  background-color: var(--bs-secondary-bg);
+  width: 170px !important;
+}
+.modal {
+  --bs-modal-header-padding: 8px 16px !important;
+  --bs-modal-header-padding-x: 16px !important;
+  --bs-modal-header-padding-y: 8px !important;
+}
+.form-control {
+  font-size: 14px !important;
+}
+.qty-label{
+  width: 50px !important;
+}
+.input-product-group{
+  width: 200px !important;
+}
+.input-qty-group{
+  width: 60px !important;
+}
+.ui-autocomplete {
+  z-index: 20000 !important; /* Adjust if your modal uses 1050 */
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: 300px;
+}
+#request-form-container .dialog-off-canvas-main-canvas{
+  margin-inline-start: 0;
+}
+#selected-products-table th{
+  font-size: 14px;
+  font-weight: 500;
+}
+#edit-selected-products-container{
+  max-height: 250px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
