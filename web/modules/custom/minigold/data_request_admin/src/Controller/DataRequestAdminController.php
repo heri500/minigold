@@ -54,12 +54,12 @@ final class DataRequestAdminController extends ControllerBase {
       ['data' => t('ID'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'false']],
       ['data' => t('No, Req'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'true']],
       ['data' => t('Tgl Request'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'true']],
-      ['data' => t('Create By'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'false']],
+      ['data' => t('Request By'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'false']],
       ['data' => t('Keterangan'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'true']],
       ['data' => t('Status'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'false']],
       ['data' => t('Change By'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'false']],
-      ['data' => t('Created'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'false']],
-      ['data' => t('Changed'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'false']],
+      //['data' => t('Created'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'false']],
+      //['data' => t('Changed'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'false']],
     ];
     $rows = [];
     $rowData = array_fill(0, count($header), '');
