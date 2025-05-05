@@ -101,12 +101,19 @@ class DatasourceController extends ControllerBase {
 
     // Format data rows
     $editable = !empty($dt_params['editable']) && $dt_params['editable'] == 1;
-
+    $view_detail = !empty($dt_params['view_detail']) && $dt_params['view_detail'] == 1;
+    $deletable = !empty($dt_params['deletable']) && $dt_params['deletable'] == 1;
     foreach ($result['records'] as $record) {
       $row = [];
       // Add edit button if requested
       if ($editable) {
-        $row[] = '<a data-id="' . $record->{$field_id} . '" class="edit-icon" href="#"><i class="fa-solid fa-pen-to-square"></i></a>';
+        $row[] = '<div class="icon-edit"><a title="click to edit request" data-id="' . $record->{$field_id} . '" class="edit-icon" href="#"><i class="fa-solid fa-pen-to-square"></i></a></div>';
+      }
+      if ($deletable) {
+        $row[] = '<div class="icon-edit"><a title="click to delete request" data-id="' . $record->{$field_id} . '" class="delete-icon icon-danger" href="#"><i class="fa-solid fa-trash-can"></i></a></div>';
+      }
+      if ($view_detail){
+        $row[] = '<div class="icon-edit"><a title="click to view detail request" data-id="' . $record->{$field_id} . '" class="detail-icon" href="#"><i class="fa-solid fa-play"></i></a></div>';
       }
       // Add all fields to the row
       foreach ($field_data as $field) {

@@ -14,6 +14,16 @@ data_request_admin.add_request_admin:
   requirements:
     _permission: 'administer request admin'
 
+data_request_admin.delete_ajax:
+  path: '/data-request-admin/delete/{id}'
+  defaults:
+    _controller: 'Drupal\data_request_admin\Controller\DataRequestAdminController::deleteRequestAdmin'
+  requirements:
+    _permission: 'administer request admin'
+    id: '\d+'  # Ensure ID is a number
+  options:
+    no_cache: TRUE
+
 data_request_admin.add_ajax:
   path: '/data-request-admin/add/{id}'
   defaults:

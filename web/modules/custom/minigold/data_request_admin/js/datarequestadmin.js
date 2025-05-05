@@ -39,6 +39,26 @@
         openRequestModal(idRequest);
       });
 
+      $(document).off('click.deleteRequestIcon', '.delete-icon').on('click.deleteRequestIcon', '.delete-icon', function (e) {
+        e.preventDefault();
+
+        let idRequest = $(this).data('id');
+        console.log('Delete icon clicked for ID:', idRequest);
+
+        if (!idRequest) {
+          alert('Error: Missing Request ID.');
+          return;
+        }
+
+        // Construct the URL using drupalSettings
+        let baseUrl = drupalSettings.path.baseUrl || '/';
+        let deleteUrl = baseUrl + 'data-request-admin/delete/' + idRequest;
+        const deleteConfirmation = confirm('Yakin ingin menghapus request ini...??!');
+        if (deleteConfirmation) {
+          window.location.href = deleteUrl;
+        }
+      });
+
       function openRequestModal(idRequest) {
         // Prevent multiple modals from opening simultaneously
         if (window.DataRequestAdmin.isModalOpen) {

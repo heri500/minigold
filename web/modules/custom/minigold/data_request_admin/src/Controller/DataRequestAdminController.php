@@ -9,6 +9,11 @@ use Drupal\Core\Form\FormBuilderInterface;
 use Drupal\Core\Render\RendererInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\data_request_admin\Form\AddRequestAdmin;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Database\Database;
+use Drupal\Core\Database\Connection;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Drupal\Core\Url;
 
 /**
  * Returns responses for Data request admin routes.
@@ -29,9 +34,14 @@ final class DataRequestAdminController extends ControllerBase {
    */
   protected $renderer;
 
-  public function __construct(FormBuilderInterface $form_builder, RendererInterface $renderer) {
+  protected Connection $database;
+  protected $targetDatabase = 'minigold_master';
+
+  public function __construct(FormBuilderInterface $form_builder, RendererInterface $renderer, AccountInterface $current_user, Connection $database) {
     $this->formBuilder = $form_builder;
     $this->renderer = $renderer;
+    $this->currentUser = $current_user;
+    $this->database = Database::getConnection('default', $this->targetDatabase);
   }
 
   /**
@@ -40,7 +50,9 @@ final class DataRequestAdminController extends ControllerBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('form_builder'),
-      $container->get('renderer')
+      $container->get('renderer'),
+      $container->get('current_user'),
+      $container->get('database')
     );
   }
 
@@ -49,8 +61,14 @@ final class DataRequestAdminController extends ControllerBase {
    * Builds the response.
    */
   public function __invoke(): array {
-    $header = [
-      ['data' => '', 'datatable_options' => ['data-orderable' => 'false', 'class' => 'no-sort', 'searchable' => 'false']],
+    if ($this->currentUser->hasPermission('administer request admin')) {
+      $header = [
+        ['data' => '', 'datatable_options' => ['data-orderable' => 'false', 'class' => 'no-sort', 'searchable' => 'false']],
+        ['data' => '', 'datatable_options' => ['data-orderable' => 'false', 'class' => 'no-sort', 'searchable' => 'false']],
+      ];
+    }
+    $header = [ ...$header,
+      // -- set only have time ['data' => '', 'datatable_options' => ['data-orderable' => 'false', 'class' => 'no-sort', 'searchable' => 'false']],
       ['data' => t('ID'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'false']],
       ['data' => t('No, Req'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'true']],
       ['data' => t('Tgl Request'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'true']],
@@ -89,17 +107,24 @@ final class DataRequestAdminController extends ControllerBase {
    * Returns the DataTable options.
    */
   private function getDataTableOptions() {
+    if ($this->currentUser->hasPermission('administer request admin')) {
+      $AjaxUrl = base_path() . 'datasource/getdata/request_admin?editable=1&deletable=1';
+      $orderedColumn = 2;
+    }else{
+      $AjaxUrl = base_path() . 'datasource/getdata/request_admin';
+      $orderedColumn = 0;
+    }
     return [
       'info' => TRUE,
       'stateSave' => TRUE,
-      'ajax' => base_path() . 'datasource/getdata/request_admin?editable=1',
+      'ajax' => $AjaxUrl,
       'processing' => TRUE,
       'serverSide' => TRUE,
       'paginationType' => 'full_numbers',
       'pageLength' => 50,
       'lengthMenu' => [[50, 100, 250, 500, -1], [50, 100, 250, 500, "All"]],
       'order' => [
-        [1, 'desc'],
+        [$orderedColumn, 'desc'],
       ],
     ];
   }
@@ -107,5 +132,31 @@ final class DataRequestAdminController extends ControllerBase {
   public function addRequestForm($id = NULL) { //// Pass $id to the form for editing mode
     $form = \Drupal::formBuilder()->getForm(AddRequestAdmin::class, $id);
     return $form;
+  }
+
+  public function deleteRequestAdmin($id = NULL) {
+    if (!empty($id)) {
+      $query = $this->database->select('request_admin', 'c')
+        ->fields('c', ['id_request_admin'])
+        ->condition('id_request_admin', $id)
+        ->execute()
+        ->fetchObject();
+
+      if (!empty($query)) {
+        // Delete all existing detail records for this request
+        $this->database->delete('request_admin_detail')
+          ->condition('id_request_admin', $id)
+          ->execute();
+
+        // Delete the main request
+        $this->database->delete('request_admin')
+          ->condition('id_request_admin', $id)
+          ->execute();
+      }
+      // Set drupal message if delete success
+      $this->messenger()->addStatus($this->t('Request has been successfully deleted.'));
+    }
+    // Redirect to the route after deletion
+    return new RedirectResponse(Url::fromRoute('data_request_admin.table')->toString());
   }
 }
