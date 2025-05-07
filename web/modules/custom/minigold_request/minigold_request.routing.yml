@@ -1,0 +1,49 @@
+minigold_request.admin_list:
+  path: '/minigold/request-admin'
+  defaults:
+    _controller: '\Drupal\minigold_request\Controller\RequestAdminController::listRequests'
+    _title: 'Request Admin List'
+  requirements:
+    _permission: 'access content'
+
+minigold_request.admin_add:
+  path: '/minigold/request-admin/add'
+  defaults:
+    _form: '\Drupal\minigold_request\Form\RequestAdminForm'
+    _title: 'Add Request Admin'
+  requirements:
+    _permission: 'access content'
+  options:
+    _admin_route: TRUE
+
+minigold_request.admin_edit:
+  path: '/minigold/request-admin/{id}/edit'
+  defaults:
+    _form: '\Drupal\minigold_request\Form\RequestAdminForm'
+    _title: 'Edit Request Admin'
+  requirements:
+    _permission: 'access content'
+  options:
+    _admin_route: TRUE
+
+minigold_request.admin_modal:
+  path: '/minigold/request-admin/modal/{id}'
+  defaults:
+    _controller: '\Drupal\minigold_request\Controller\RequestAdminController::modalForm'
+    _title: 'Request Admin Form'
+    id: 0
+  requirements:
+    _permission: 'access content'
+  options:
+    _admin_route: TRUE
+    parameters:
+      id:
+        type: integer
+
+minigold_request.product_autocomplete:
+  path: '/minigold/request-admin/product-autocomplete'
+  defaults:
+    _controller: '\Drupal\minigold_request\Controller\RequestAdminController::productAutocomplete'
+    _format: json
+  requirements:
+    _permission: 'access content'

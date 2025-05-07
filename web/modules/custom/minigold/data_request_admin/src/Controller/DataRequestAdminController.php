@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace Drupal\data_request_admin\Controller;
 
+use Drupal\Core\Ajax\AjaxResponse;
+use Drupal\Core\Ajax\HtmlCommand;
+use Drupal\Core\Ajax\OpenModalDialogCommand;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Form\FormBuilderInterface;
+use Drupal\Core\Link;
 use Drupal\Core\Render\RendererInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\data_request_admin\Form\AddRequestAdmin;
@@ -83,8 +87,22 @@ final class DataRequestAdminController extends ControllerBase {
     $rowData = array_fill(0, count($header), '');
     $rows[] = $rowData;
 
-    $Prefix = '<div class="col"><a id="add-new-request" href="#" class="btn btn-primary btn-sm">BUAT REQUEST</a></div>';
-    $Prefix .= '<div class="col">&nbsp;</div>';
+    // Default route is with ID 0 for adding new requests
+    $add_button = Link::fromTextAndUrl(
+      $this->t('Add Request'),
+      Url::fromRoute('data_request_admin.modal_form', ['id' => 0])
+    )->toRenderable();
+
+    $add_button['#attributes'] = [
+      'class' => ['btn', 'btn-primary', 'use-ajax'],
+      'id' => 'add-request-button',
+      'data-dialog-type' => 'modal',
+      'data-dialog-options' => json_encode([
+        'width' => '800',
+      ]),
+    ];
+    $rendered_button = \Drupal::service('renderer')->render($add_button);
+
     return [
       '#type' => 'table',
       '#header' => $header,
@@ -95,10 +113,16 @@ final class DataRequestAdminController extends ControllerBase {
         'style' => 'width: 100%',
       ],
       '#datatable_options' => $this->getDataTableOptions(),
-      '#prefix' => $Prefix,
+      '#prefix' => $rendered_button,
       '#attached' => [
         'library' => [
-          'data_request_admin/datarequestadmin_js', // Define the library in the module's *.libraries.yml file.
+          'data_request_admin/datarequestadmin_js',
+          'core/drupal.dialog.ajax',// Define the library in the module's *.libraries.yml file.
+        ],
+        'drupalSettings' => [
+          'dataRequestAdmin' => [
+            'modalFormUrl' => Url::fromRoute('data_request_admin.modal_form', ['id' => 0])->toString(),
+          ],
         ],
       ],
     ];
@@ -132,6 +156,22 @@ final class DataRequestAdminController extends ControllerBase {
   public function addRequestForm($id = NULL) { //// Pass $id to the form for editing mode
     $form = \Drupal::formBuilder()->getForm(AddRequestAdmin::class, $id);
     return $form;
+  }
+
+  public function modalForm($id = 0) {
+    $response = new AjaxResponse();
+
+    // Ensure ID is properly handled - convert to int for numeric comparison
+    $id = (int)$id;
+
+    // Build the form
+    $form = $this->formBuilder->getForm('Drupal\data_request_admin\Form\AddRequestAdmin', $id);
+
+    // Add the form to a modal dialog
+    $title = ($id > 0) ? $this->t('Edit Request Admin') : $this->t('Add Request Admin');
+    $response->addCommand(new OpenModalDialogCommand($title, $form, ['width' => '700']));
+
+    return $response;
   }
 
   public function deleteRequestAdmin($id = NULL) {

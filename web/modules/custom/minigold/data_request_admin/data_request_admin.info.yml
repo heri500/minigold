@@ -4,5 +4,7 @@ description: 'Module yang menangani request untuk cetak produk dari admin ke bag
 package: Minigold
 core_version_requirement: ^10 || ^11
 dependencies:
+  - drupal:file
+  - fontawesome:fontawesome
   - data_product:data_product
   - data_source:data_source

@@ -70,3 +70,22 @@ ALTER TABLE IF EXISTS public.request_admin_detail
 
 COMMENT ON COLUMN public.request_admin_detail.id_request_admin
     IS 'Related request admin';
+-- Column: public.request_admin.nama_pemesan
+
+-- ALTER TABLE IF EXISTS public.request_admin DROP COLUMN IF EXISTS nama_pemesan;
+
+ALTER TABLE IF EXISTS public.request_admin
+  ADD COLUMN nama_pemesan character varying(255) COLLATE pg_catalog."default" DEFAULT NULL::character varying;
+-- Column: public.request_admin.file_attachment
+
+-- ALTER TABLE IF EXISTS public.request_admin DROP COLUMN IF EXISTS file_attachment;
+
+ALTER TABLE IF EXISTS public.request_admin
+  ADD COLUMN file_attachment character varying(255) COLLATE pg_catalog."default" DEFAULT NULL::character varying;
+
+-- Column: public.request_admin.file_id
+
+-- ALTER TABLE IF EXISTS public.request_admin DROP COLUMN IF EXISTS file_id;
+
+ALTER TABLE IF EXISTS public.request_admin
+  ADD COLUMN file_id integer;

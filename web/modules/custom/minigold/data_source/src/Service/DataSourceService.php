@@ -4,7 +4,11 @@ namespace Drupal\data_source\Service;
 
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Database\Database;
-
+use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\Core\File\FileSystemInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\file\FileInterface;
+use Drupal\Core\Url;
 /**
  * Service for data source operations.
  */
@@ -32,14 +36,49 @@ class DataSourceService {
   protected $targetDatabase = 'minigold_master';
 
   /**
-   * Constructs a DataSourceService object.
+   * The current user.
+   *
+   * @var \Drupal\Core\Session\AccountProxyInterface
+   */
+  protected $currentUser;
+
+  /**
+   * The file system service.
+   *
+   * @var \Drupal\Core\File\FileSystemInterface
+   */
+  protected $fileSystem;
+
+  /**
+   * The entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
+
+  /**
+   * Constructs a RequestAdminService object.
    *
    * @param \Drupal\Core\Database\Connection $database
-   *   The database connection (not used directly, just for service instantiation).
+   *   The database connection.
+   * @param \Drupal\Core\Session\AccountProxyInterface $current_user
+   *   The current user.
+   * @param \Drupal\Core\File\FileSystemInterface $file_system
+   *   The file system service.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   The entity type manager.
    */
-  public function __construct(Connection $database) {
+  public function __construct(
+    Connection $database,
+    AccountProxyInterface $current_user,
+    FileSystemInterface $file_system,
+    EntityTypeManagerInterface $entity_type_manager
+  ) {
     // Use the minigold_master database connection instead of the default one
     $this->database = Database::getConnection('default', $this->targetDatabase);
+    $this->currentUser = $current_user;
+    $this->fileSystem = $file_system;
+    $this->entityTypeManager = $entity_type_manager;
   }
 
   /**
@@ -156,6 +195,143 @@ class DataSourceService {
     ];
   }
 
+  public function fetchRecordsById($table_name, array $fields, $id_value = null) {
+    $full_table_name = $this->getFullTableName($table_name);
+    if (empty($fields) || !is_array($fields)){
+      $fields = $this->getTableFields($table_name);
+    }
+    $query = $this->database->select($full_table_name, 'ta')
+      ->fields('ta', $fields);
+    $field_id = $this->getTableFieldsId($table_name);
+    if (!empty($field_id) && !empty($id_value)) {
+      $db_and = $query->andConditionGroup();
+      $db_and->condition($field_id, $id_value);
+      $query->condition($db_and);
+    }
+    // Execute and get records
+    $records = $query->execute()->fetchObject();
+    return $records;
+  }
+  public function fetchRecordsByField($table_name, array $fields, array $field_value, array $left_join) {
+    $full_table_name = $this->getFullTableName($table_name);
+    if (empty($fields) || !is_array($fields)){
+      $fields = $this->getTableFields($table_name);
+    }
+    $query = $this->database->select($full_table_name, 'ta')
+      ->fields('ta', $fields);
+    if (is_array($field_value) && !empty($field_value)) {
+      $db_and = $query->andConditionGroup();
+      foreach ($field_value as $field_cond) {
+        // Use ILIKE for PostgreSQL case-insensitive search
+        foreach ($field_cond as $key => $value){
+          $db_and->condition($key, $value);
+        }
+      }
+      $query->condition($db_and);
+    }
+    if (is_array($left_join) && !empty($left_join)) {
+      $AliasTable = !empty($left_join['alias']) ? $left_join['alias'] : 'al';
+      $query->leftJoin($left_join['table_name'], $AliasTable, 'ta.'.$left_join['target_field'].' = '.$AliasTable.'.'.$left_join['source_field']);
+      if (is_array($left_join['field_name']) && !empty($left_join['field_name'])){
+        foreach ($left_join['field_name'] as $field_name){
+          $query->addField($AliasTable, $field_name);
+        }
+      }
+    }
+    // Execute and get records
+    $records = $query->execute()->fetchAll();
+    return $records;
+  }
+
+  /**
+   * @return void
+   */
+  public function saveRequest($id, array $values){
+    $transaction = $this->database->startTransaction();
+    try {
+      $request_data = [
+        'no_request' => $values['no_request'],
+        'tgl_request' => $values['tgl_request'],
+        'nama_pemesan' => $values['nama_pemesan'],
+        'keterangan' => $values['keterangan'],
+        'uid_request' => $this->currentUser->id(),
+      ];
+      $file_id = NULL;
+      $file_name = NULL;
+      if (!empty($values['file_upload'])) {
+        $file = $this->entityTypeManager->getStorage('file')->load(reset($values['file_upload']));
+        if ($file instanceof FileInterface) {
+          // Make the file permanent
+          $file->setPermanent();
+          $file->save();
+          $file_id = $file->id();
+          $file_name = $file->getFilename();
+          if ($file_id) {
+            $request_data['file_id'] = $file_id;
+            $request_data['file_attachment'] = $file_name;
+          }
+        }
+      }
+      if (empty($id)) {
+        //Process Insert Data
+        $id = $this->insertTable('request_admin', $request_data);
+      }else{
+        //Process Update Data
+        $fieldsid_data = ['field' => 'id_request_admin', 'value' => $id];
+        $this->updateTable('request_admin', $request_data, $fieldsid_data);
+        // Delete all existing detail records for this request
+        $this->deleteTableById('request_admin_detail', $fieldsid_data);
+      }
+      if (!empty($id) && !empty($values['detail_data'])){
+        foreach ($values['detail_data'] as $product) {
+          $detail_insert = [
+            'id_request_admin' => $id,
+            'id_product' => $product['product_id'],
+            'qty_request' => $product['qty'],
+          ];
+          $this->insertTable('request_admin_detail', $detail_insert);
+        }
+      }
+      return $id;
+    }catch (\Exception $e) {
+      // Roll back the transaction if something went wrong
+      if (isset($transaction)) {
+        $transaction->rollBack();
+      }
+      \Drupal::logger('data_admin_request')->error('Error saving request: @message', ['@message' => $e->getMessage()]);
+      return FALSE;
+    }
+  }
+
+  public function insertTable($table_name, array $fields_data)
+  {
+    $query = null;
+    if (!empty($table_name)) {
+      $query = $this->database->insert($table_name)
+        ->fields($fields_data)
+        ->execute();
+    }
+    return $query;
+  }
+  public function updateTable($table_name, array $fields_data, array $fieldsid_data){
+    $query = null;
+    if (!empty($table_name)) {
+      $query = $this->database->update($table_name)
+        ->fields($fields_data)
+        ->condition($fieldsid_data['field'], $fieldsid_data['value'])
+        ->execute();
+    }
+    return $query;
+  }
+
+  public function deleteTableById($table_name, array $fieldsid_data){
+    if (!empty($table_name) && !empty($fieldsid_data) && is_array($fieldsid_data)) {
+      $this->database->delete($table_name)
+        ->condition($fieldsid_data['field'], $fieldsid_data['value'])
+        ->execute();
+    }
+  }
+
   /**
    * Returns the fields for a given table.
    *
@@ -179,7 +355,14 @@ class DataSourceService {
       case 'request_admin':
         $field_data = [
           'id_request_admin', 'no_request', 'tgl_request', 'uid_request',
-          'keterangan', 'status_request', 'uid_changed', 'created', 'changed'
+          'keterangan', 'status_request', 'uid_changed', 'created', 'changed',
+          'nama_pemesan','file_attachment', 'file_id'
+        ];
+        break;
+      case 'request_admin_detail':
+        $field_data = [
+          'id_request_admin_detail', 'id_request_admin', 'id_product', 'qty_request', 'status_detail',
+          'uid_created', 'uid_changed', 'created', 'changed'
         ];
         break;
       // Add cases for other tables here
@@ -197,6 +380,10 @@ class DataSourceService {
         break;
       case 'request_admin':
         $field_id = 'id_request_admin';
+        break;
+      case 'request_admin_detail':
+        $field_id = 'id_request_admin_detail';
+        break;
       // Add cases for other tables here
 
     }
@@ -224,6 +411,11 @@ class DataSourceService {
       case 'request_admin':
         $field_data = [
           'no_request', 'tgl_request', 'keterangan'
+        ];
+        break;
+      case 'request_admin_detail':
+        $field_data = [
+          'id_product', 'qty_request', 'status_detail'
         ];
         break;
       // Add cases for other tables here

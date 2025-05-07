@@ -1,45 +1,149 @@
+/**
+ * @file
+ * JavaScript for request admin modal and autocomplete functionality.
+ */
 (function ($, Drupal, once) {
-  // Check if the behavior has already been defined to prevent duplicate declarations
-  if (Drupal.behaviors.dataRequestAdmin) {
-    return;
-  }
+  'use strict';
 
-  // Define any constants in a namespaced object to avoid global conflicts
-  if (!window.DataRequestAdmin) {
-    window.DataRequestAdmin = {
-      Constants: {
-        POPOVER_OPEN_DELAY: 300 // Put your actual value here
-      },
-      // Add a flag to track if modal is currently open to prevent multiple instances
-      isModalOpen: false
-    };
-  }
-
-  Drupal.behaviors.dataRequestAdmin = {
+  /**
+   * Attach behaviors to request admin forms and modals.
+   *
+   * @type {Drupal~behavior}
+   */
+  Drupal.behaviors.requestAdminModal = {
     attach: function (context, settings) {
-      // Use once() for all elements to prevent duplicate attachments
-      once('data-request-add', '#add-new-request', context).forEach(function(element) {
-        $(element).on('click', function (e) {
-          e.preventDefault();
-          openRequestModal(0);
+      const productTable = $("#selected-products-body", context);
+      const selectedProductsData = $("#selected-products-data", context);
+      let selectedProducts = [];
+      let currentSelectedProduct = [];
+
+      try {
+        selectedProducts = JSON.parse(selectedProductsData.val() || "[]");
+      } catch (e) {
+        selectedProducts = [];
+      }
+
+      function updateProductTable() {
+        productTable.empty();
+        selectedProducts.forEach((product, index) => {
+          const row = $("<tr></tr>");
+          row.append(`<td>${index + 1}</td>`);
+          row.append(`<td>${product.product_code || "-"}</td>`);
+          row.append(`<td>${product.product_name}</td>`);
+          row.append(`<td>${product.qty}</td>`);
+          row.append(`<td class="btn-col"><button type="button" class="btn btn-xs btn-danger delete-product" data-index="${index}"><i class="fa-solid fa-trash"></i></button></td>`);
+          productTable.append(row);
+        });
+
+        // Update the hidden field
+        selectedProductsData.val(JSON.stringify(selectedProducts));
+      }
+
+      // Handle product autocomplete selection.
+      $(once('product-autocomplete', 'input[name="product"]', context)).each(function (element) {
+        var $input = $(this);
+        var $idField = $('input[name="product_id"]');
+        $input.on('autocompleteselect', function (event, ui) {
+          // Extract the ID from the value (format is "Product Name (ID)")
+          const selectedProduct = ui.item;
+          currentSelectedProduct = selectedProduct;
+          $idField.val(selectedProduct.id);
+          // Focus on quantity field after selecting a product
+          setTimeout(function() {
+            $("#product-qty").select();
+          }, 100);
+        });
+
+        // Clear product_id when the product field is cleared
+        $input.on('change', function () {
+          if (!$(this).val()) {
+            $idField.val('');
+          }
         });
       });
 
-      // Use event delegation for edit buttons, with a tracking system to prevent multiple executions
-      // This works better for elements in DataTables or dynamically created elements
-      $(document).off('click.editRequestIcon', '.edit-icon').on('click.editRequestIcon', '.edit-icon', function(e) {
-        e.preventDefault();
-        let idRequest = $(this).data('id');
-        console.log('Edit icon clicked for ID:', idRequest);
-
-        if (!idRequest) {
-          alert('Error: Missing Request ID.');
-          return;
-        }
-        openRequestModal(idRequest);
+      once('search-product', '#button-addon1', context).forEach(function(element) {
+        $(element).on("click", function() {
+          $("#product-search").focus();
+        });
       });
 
-      $(document).off('click.deleteRequestIcon', '.delete-icon').on('click.deleteRequestIcon', '.delete-icon', function (e) {
+      // Handle add product button
+      once('product-add', '#add-product-btn', context).forEach(function(element) {
+        $(element).on("click", function() {
+          const productId = $("#product-id").val();
+          const productSearch = $("#product-search");
+          const productName = productSearch.val();
+          const productQty = parseInt($("#product-qty").val()) || 1;
+          const productCode = currentSelectedProduct.code || '-';
+
+          if (!productId || !productName) {
+            alert("Silahkan pilih produk terlebih dahulu");
+            return;
+          }
+
+          // Check if product already exists in the table
+          const existingProductIndex = selectedProducts.findIndex(p => p.product_id === productId);
+
+          if (existingProductIndex >= 0) {
+            // Update quantity if product already exists
+            selectedProducts[existingProductIndex].qty += productQty;
+          } else {
+            // Add new product to array
+            selectedProducts.push({
+              product_id: productId,
+              product_code: productCode,
+              product_name: productName,
+              qty: productQty
+            });
+          }
+          // Clear currentSelectedProduct
+          currentSelectedProduct = [];
+          // Clear the input fields
+          $("#product-id").val("");
+          productSearch.val("").data('product-code', '');
+          $("#product-qty").val("1");
+          productSearch.focus();
+
+          // Update the table
+          updateProductTable();
+        });
+      });
+
+      // Set modal size for Bootstrap modal
+      $(document).on('dialog:aftercreate', function (event, dialog, $element) {
+        // Add Bootstrap 5 classes to the modal
+        if ($element.find('form#request-admin-form').length > 0) {
+          $element.closest('.ui-dialog').addClass('modal-dialog');
+          $element.addClass('modal-content');
+          $element.find('.ui-dialog-titlebar').addClass('modal-header');
+          $element.find('.ui-dialog-content').addClass('modal-body');
+
+          // Add form-control class to form inputs
+          $element.find('input[type="text"], input[type="date"], textarea, select').addClass('form-control');
+          $element.find('input[type="submit"], button').addClass('btn');
+          $element.find('input[type="submit"]').addClass('btn-primary');
+          $element.find('button[value="Cancel"]').addClass('btn-secondary');
+        }
+      });
+      // once qty enter press
+      once('qty-keypress', '#product-qty', context).forEach(function(element) {
+        $(element).on("keypress", function(e) {
+          if (e.which === 13) { // Enter key
+            e.preventDefault();
+            $("#add-product-btn").click();
+          }
+        });
+      });
+
+      // Handle delete button clicks (using delegation)
+      $(document).on("click", ".delete-product", function() {
+        const index = $(this).data("index");
+        selectedProducts.splice(index, 1);
+        updateProductTable();
+      });
+
+      $(document).off('click.deleteRequestIcon').on('click.deleteRequestIcon', '.delete-icon', function (e) {
         e.preventDefault();
 
         let idRequest = $(this).data('id');
@@ -59,61 +163,35 @@
         }
       });
 
-      function openRequestModal(idRequest) {
-        // Prevent multiple modals from opening simultaneously
-        if (window.DataRequestAdmin.isModalOpen) {
-          $('#requestModal').remove();
+      // Handle edit icon clicks
+      $(document).off('click.editRequesticon').on('click.editRequesticon', '.edit-icon', function (e) {
+        e.preventDefault();
+
+        let requestId = $(this).data('id');
+        console.log('Edit icon clicked for ID:', requestId);
+
+        if (!requestId) {
+          alert('Error: Missing Request ID.');
+          return;
         }
 
-        console.log('Opening modal for ID:', idRequest);
-        window.DataRequestAdmin.isModalOpen = true;
+        // Create a direct AJAX request to open the modal with the correct ID
+        let baseUrl = drupalSettings.path.baseUrl || '/';
+        let modalUrl = baseUrl + 'data-request-admin/add/' + requestId;
 
-        // Remove any existing modals first
-        $('#requestModal').remove();
-
-        const modalHtml = `
-          <div class="modal fade" id="requestModal" tabindex="-1" aria-labelledby="requestModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-md-custom">
-              <div class="modal-content">
-                <div class="modal-header">
-                  <h5 class="modal-title">${idRequest ? 'Edit' : 'Tambah'} Request Admin</h5>
-                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                  <div id="request-form-container"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        `;
-
-        $('body').append(modalHtml);
-        $('#requestModal').modal('show');
-
-        let url = idRequest ? `data-request-admin/add/${idRequest}` : `data-request-admin/add/0`;
-        console.log('Loading URL:', Drupal.url(url));
-
-        // Load content via AJAX, but handle script evaluation carefully
-        $.ajax({
-          url: Drupal.url(url),
-          dataType: 'html',
-          success: function(response) {
-            $('#request-form-container').html(response);
-
-            // Manually attach behaviors to the new content
-            Drupal.attachBehaviors($('#request-form-container')[0]);
-          },
-          error: function(xhr, status, error) {
-            console.error('Error loading form:', error);
-            $('#request-form-container').html('<div class="alert alert-danger">Error loading form. Please try again.</div>');
+        // Use Drupal's Ajax framework directly
+        Drupal.ajax({
+          url: modalUrl,
+          dialogType: 'modal',
+          dialog: {
+            width: 800,
+            title: 'Edit Request Admin'
           }
-        });
+        }).execute();
+      });
 
-        $('#requestModal').on('hidden.bs.modal', function () {
-          window.DataRequestAdmin.isModalOpen = false;
-          $(this).remove();
-        });
-      }
+      // Initialize the table
+      updateProductTable();
     }
   };
 })(jQuery, Drupal, once);

@@ -1,0 +1,13 @@
+request_admin:
+  version: 1.x
+  js:
+    js/request-admin-modal.js: {}
+  css:
+    theme:
+      css/request-admin.css: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/drupalSettings
+    - core/once
+    - core/drupal.ajax

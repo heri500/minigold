@@ -42,11 +42,12 @@
       once('product-autocomplete', '#product-search', context).forEach(function(element) {
         $(element).on("autocompleteselect", function(event, ui) {
           const selectedProduct = ui.item;
+          alert(selectedProduct.id);
           $("#product-id").val(selectedProduct.id);
 
           // Store product code for later use
           $(element).data('product-code', selectedProduct.code || '-');
-
+          console.log(element);
           // Focus on quantity field after selecting a product
           setTimeout(function() {
             $("#product-qty").select();
@@ -122,7 +123,8 @@
         });
       });
 
-      // Form submission validation
+      /** Form submission validation
+       * temporary disable because admin no need to add detail request
       once('form-validate', 'form#data-request-admin-add-request-admin', context).forEach(function(element) {
         $(element).on("submit", function(e) {
           if (selectedProducts.length === 0) {
@@ -132,6 +134,7 @@
           }
         });
       });
+      **/
     }
   };
 })(jQuery, Drupal, once);

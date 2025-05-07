@@ -24,16 +24,6 @@ data_request_admin.delete_ajax:
   options:
     no_cache: TRUE
 
-data_request_admin.add_ajax:
-  path: '/data-request-admin/add/{id}'
-  defaults:
-    _controller: 'Drupal\data_request_admin\Controller\DataRequestAdminController::addRequestForm'
-  requirements:
-    _permission: 'administer request admin'
-    id: '\d+'  # Ensure ID is a number
-  options:
-    no_cache: TRUE
-
 data_request_admin.product_autocomplete:
   path: '/data-request-admin/product-autocomplete'
   defaults:
@@ -43,3 +33,25 @@ data_request_admin.product_autocomplete:
     _permission: 'access request admin'
   options:
     no_cache: TRUE
+
+data_request_admin.form:
+  path: '/data-request-form'
+  defaults:
+    _form: '\Drupal\data_request_admin\Form\DataRequestForm'
+    _title: 'Data Request Form'
+  requirements:
+    _permission: 'access request admin'
+
+data_request_admin.modal_form:
+  path: '/data-request-admin/add/{id}'
+  defaults:
+    _controller: '\Drupal\data_request_admin\Controller\DataRequestAdminController::modalForm'
+    _title: 'Request Admin Form'
+    id: 0
+  requirements:
+    _permission: 'access request admin'
+  options:
+    _admin_route: TRUE
+    parameters:
+      id:
+        type: integer

@@ -1,0 +1,50 @@
+<?php
+
+/**
+ * @file
+ * Contains minigold_request.module.
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Form\FormStateInterface;
+
+/**
+ * Implements hook_help().
+ */
+function minigold_request_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    case 'help.page.minigold_request':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('Minigold Request module for managing request admin records.') . '</p>';
+      return $output;
+    default:
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function minigold_request_theme() {
+  return [
+    'request_admin_list' => [
+      'variables' => [
+        'requests' => [],
+        'add_button' => NULL,
+        'header' => [],
+      ],
+      'template' => 'request-admin-list',
+    ],
+  ];
+}
+
+/**
+ * Implements hook_page_attachments().
+ */
+function minigold_request_page_attachments(array &$attachments) {
+  $route_name = \Drupal::routeMatch()->getRouteName();
+
+  if (strpos($route_name, 'minigold_request.admin') === 0) {
+    $attachments['#attached']['library'][] = 'minigold_request/request_admin';
+  }
+}

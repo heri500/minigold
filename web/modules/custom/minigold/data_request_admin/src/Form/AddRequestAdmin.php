@@ -4,21 +4,49 @@ declare(strict_types=1);
 
 namespace Drupal\data_request_admin\Form;
 
-use Drupal\Core\Database\Database;
+use Drupal\Core\Ajax\AjaxResponse;
+use Drupal\Core\Ajax\CloseModalDialogCommand;
+use Drupal\Core\Ajax\MessageCommand;
+use Drupal\Core\Ajax\RedirectCommand;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Database\Connection;
+use Drupal\Core\Url;
+use Drupal\data_source\Service\DataSourceService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\Validator\Constraints\File as SymfonyFile;
+use Drupal\Core\File\FileSystemInterface;
+use Drupal\file\Entity\File;
 
 /**
  * Provides a Data request admin form.
  */
 final class AddRequestAdmin extends FormBase {
+  /**
+   * The data source service.
+   *
+   * @var \Drupal\data_source\Service\DataSourceService
+   */
+  protected $dataSourceService;
 
-  protected Connection $database;
-  protected $targetDatabase = 'minigold_master';
-  public function __construct(Connection $database) {
-    $this->database = Database::getConnection('default', $this->targetDatabase);
+  /**
+   * The request stack.
+   *
+   * @var \Symfony\Component\HttpFoundation\RequestStack
+   */
+  protected $requestStack;
+
+  /**
+   * Constructs a DatasourceController object.
+   *
+   * @param \Drupal\data_source\Service\DataSourceService $data_source_service
+   *   The data source service.
+   * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
+   *   The request stack.
+   */
+  public function __construct(DataSourceService $data_source_service, RequestStack $request_stack) {
+    $this->dataSourceService = $data_source_service;
+    $this->requestStack = $request_stack;
   }
 
   /**
@@ -26,10 +54,10 @@ final class AddRequestAdmin extends FormBase {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('database')
+      $container->get('data_source.service'),
+      $container->get('request_stack')
     );
   }
-
   /**
    * {@inheritdoc}
    */
@@ -41,34 +69,41 @@ final class AddRequestAdmin extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, $id_request = NULL): array {
-    // Attach custom CSS and JavaScript
-    $form['#attached']['library'][] = 'data_request_admin/form_request_admin';
-
     $request_data = [];
     $SelectedData = null;
-    if ($id_request) {
-      $query = $this->database->select('request_admin', 'c')
-        ->fields('c', ['id_request_admin', 'no_request', 'tgl_request', 'uid_request',
-          'keterangan', 'status_request', 'uid_changed', 'created', 'changed'])
-        ->condition('id_request_admin', $id_request)
-        ->execute()
-        ->fetchAssoc();
+    $current_file_id = null;
 
+    if ($id_request) {
+      $table_name = 'request_admin';
+      $field_data = $this->dataSourceService->getTableFields($table_name);
+      $query = $this->dataSourceService->fetchRecordsById($table_name, $field_data, $id_request);
       if ($query) {
         $request_data = $query;
         $form['id'] = [
           '#type' => 'hidden',
-          '#value' => $request_data['id_request_admin'] ?? '',
+          '#value' => $request_data->id_request_admin ?? '',
         ];
-        $query2 = $this->database->select('request_admin_detail', 'rad')
-          ->fields('rad', ['id_product', 'qty_request'])
-          ->condition('rad.id_request_admin', $id_request);
-        $query2->leftJoin('product', 'p', 'rad.id_product = p.product_id');
-        // Add fields from the product table
-        $query2->addField('p', 'product_id');
-        $query2->addField('p', 'brand');
-        $query2->addField('p', 'product_name');
-        $result = $query2->execute()->fetchAll();
+
+        // Store the current file ID if it exists
+        if (!empty($request_data->file_id)) {
+          $current_file_id = $request_data->file_id;
+          $form['existing_file_id'] = [
+            '#type' => 'hidden',
+            '#value' => $current_file_id,
+          ];
+        }
+
+        $table_name = 'request_admin_detail';
+        $field_data = $this->dataSourceService->getTableFields($table_name);
+        $field_value[] = ['id_request_admin' => $request_data->id_request_admin];
+        $left_join = [
+          'alias' => 'p',
+          'table_name' => 'product',
+          'target_field' => 'id_product',
+          'source_field' => 'product_id',
+          'field_name' => ['product_id','brand','product_name'],
+        ];
+        $result = $this->dataSourceService->fetchRecordsByField($table_name, $field_data, $field_value, $left_join);
         $ArrData = [];
         foreach ($result as $rowData){
           $newRow = new \stdClass();
@@ -90,10 +125,10 @@ final class AddRequestAdmin extends FormBase {
       '#prefix' => '<div class="input-group mb-3"><span class="input-group-text">No. Request</span>',
       '#suffix' => '</div>',
       '#required' => TRUE,
-      '#default_value' => $request_data['no_request'] ?? '',
+      '#default_value' => $request_data->no_request ?? '',
     ];
-    if (!empty($request_data['tgl_request'])) {
-      $datetime = new \DateTime($request_data['tgl_request']);
+    if (!empty($request_data->tgl_request)) {
+      $datetime = new \DateTime($request_data->tgl_request);
       $unix_timestamp = $datetime->getTimestamp();
       $form['tgl_request'] = [
         '#type' => 'date',
@@ -115,6 +150,17 @@ final class AddRequestAdmin extends FormBase {
         '#default_value' => date('Y-m-d'),
       ];
     }
+    $form['nama_pemesan'] = [
+      '#type' => 'textfield',
+      '#attributes' => [
+        'class' => ['form-control'],
+        'placeholder' => 'Nama Pemesan',
+      ],
+      '#prefix' => '<div class="input-group mb-3"><span class="input-group-text">Nama Pemesan</span>',
+      '#suffix' => '</div>',
+      '#required' => TRUE,
+      '#default_value' => $request_data->nama_pemesan ?? '',
+    ];
     $form['keterangan'] = [
       '#type' => 'textarea',
       '#attributes' => [
@@ -125,8 +171,50 @@ final class AddRequestAdmin extends FormBase {
       '#prefix' => '<div class="input-group mb-3"><span class="input-group-text">Keterangan</span>',
       '#suffix' => '</div>',
       '#required' => FALSE,
-      '#default_value' => $request_data['keterangan'] ?? '',
+      '#default_value' => $request_data->keterangan ?? '',
     ];
+
+    $directory = 'public://requestfile';
+    \Drupal::service('file_system')->prepareDirectory($directory, FileSystemInterface::CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS);
+
+    // Set up file attachment field with default value if editing
+    $file_field_options = [
+      '#type' => 'managed_file',
+      '#upload_location' => 'public://requestfile/',
+      '#constraints' => [
+        new SymfonyFile([
+          'maxSize' => '25M',
+          'mimeTypes' => [
+            'application/pdf',
+            'image/jpeg',
+            'image/png',
+          ],
+          'mimeTypesMessage' => $this->t('Please upload a valid file (pdf, jpg, png).'),
+        ]),
+      ],
+      '#prefix' => '<div class="input-group mb-3"><span class="input-group-text">File Attachment</span><div class="form-control">',
+      '#suffix' => '</div></div>',
+    ];
+
+    // Make file required only for new records
+    if (!$id_request) {
+      $file_field_options['#required'] = TRUE;
+    } else {
+      $file_field_options['#required'] = FALSE;
+
+      // Set default value if there's an existing file
+      if ($current_file_id) {
+        $file_field_options['#default_value'] = [$current_file_id];
+        // Add description about existing file
+        $file = File::load($current_file_id);
+        if ($file) {
+          $file_field_options['#description'] = $this->t('Current file: @filename. Upload a new file to replace it or leave empty to keep the current file.',
+            ['@filename' => $file->getFilename()]);
+        }
+      }
+    }
+
+    $form['file_attachment'] = $file_field_options;
 
     // Create a container to hold both fields
     $form['product_container'] = [
@@ -165,7 +253,6 @@ final class AddRequestAdmin extends FormBase {
       '#autocomplete_route_name' => 'data_request_admin.product_autocomplete',
       '#autocomplete_route_parameters' => [],
       '#required' => FALSE, // Changed to FALSE since we'll validate the presence of products in the table instead
-      '#default_value' => $request_data['no_request'] ?? '',
       '#weight' => 3,
     ];
 
@@ -217,7 +304,7 @@ final class AddRequestAdmin extends FormBase {
     $form['selected_products_container'] = [
       '#type' => 'container',
       '#attributes' => [
-        'class' => ['mt-3', 'mb-4'],
+        'class' => ['mt-3', 'mb-1'],
       ],
     ];
 
@@ -265,11 +352,28 @@ final class AddRequestAdmin extends FormBase {
       '#attributes' => [
         'class' => ['btn btn-primary'],
       ],
+      '#ajax' => [
+        'callback' => '::ajaxSubmit',
+        'wrapper' => 'request-admin-form-wrapper',
+        'progress' => [
+          'type' => 'throbber',
+          'message' => $this->t('Saving...'),
+        ],
+      ],
     ];
     $form['actions']['cancel'] = [
-      '#type' => 'markup',
-      '#markup' => '&nbsp;<a type="button" class="btn btn-danger" data-bs-dismiss="modal">Batal</a>',
+      '#type' => 'button',
+      '#value' => $this->t('Batal'),
+      '#attributes' => [
+        'class' => ['btn btn-danger'],
+      ],
+      '#ajax' => [
+        'callback' => '::ajaxCancel',
+        'wrapper' => 'request-admin-form-wrapper',
+      ],
     ];
+
+    //$form['#attached']['library'][] = 'data_request_admin/formrequestadmin_js';
 
     return $form;
   }
@@ -278,11 +382,24 @@ final class AddRequestAdmin extends FormBase {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state): void {
-    // Validate that at least one product has been selected
-    $selected_products = json_decode($form_state->getValue('selected_products'), TRUE);
+    $attachment = $form_state->getValue('file_attachment');
+    $id = $form_state->getValue('id');
 
+    // Only validate the file attachment if this is a new record or if a new file was uploaded
+    if (empty($id) && empty($attachment)) {
+      $form_state->setErrorByName('file_attachment', $this->t('Please upload a file attachment.'));
+    }
+
+    // Validate the nama_pemesan field
+    $nama_pemesan = $form_state->getValue('nama_pemesan');
+    if (empty($nama_pemesan)) {
+      $form_state->setErrorByName('nama_pemesan', $this->t('Please enter nama pemesan.'));
+    }
+
+    // Validate that there are selected products
+    $selected_products = json_decode($form_state->getValue('selected_products'), TRUE);
     if (empty($selected_products)) {
-      $form_state->setErrorByName('selected_products', $this->t('Please add at least one product to the request.'));
+      $form_state->setErrorByName('selected_products', $this->t('Please select at least one product.'));
     }
   }
 
@@ -290,83 +407,65 @@ final class AddRequestAdmin extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
+  }
+
+  public function ajaxSubmit(array &$form, FormStateInterface $form_state) {
+    $response = new AjaxResponse();
+
+    if ($form_state->hasAnyErrors()) {
+      // Return the form with errors
+      return $form;
+    }
+
     // Get the form values
+    $id = !empty($form_state->getValue('id')) ? $form_state->getValue('id') : null;
     $no_request = $form_state->getValue('no_request');
     $tgl_request = $form_state->getValue('tgl_request');
+    $nama_pemesan = $form_state->getValue('nama_pemesan');
     $date = new \DateTime($tgl_request);
     // Format it as a PostgreSQL timestamp string
     $tgl_request = $date->format('Y-m-d H:i:s');
     $keterangan = $form_state->getValue('keterangan');
     $selected_products = json_decode($form_state->getValue('selected_products'), TRUE);
-    $id = $form_state->getValue('id');
 
-    // Use database transaction to ensure data integrity
-    $transaction = $this->database->startTransaction();
-
-    try {
-      if (!empty($id)) {
-        // Update existing record
-        $this->database->update('request_admin')
-          ->fields([
-            'no_request' => $no_request,
-            'tgl_request' => $tgl_request,
-            'keterangan' => $keterangan,
-            'uid_changed' => \Drupal::currentUser()->id(),
-            'changed' => date('Y-m-d H:i:s'),
-          ])
-          ->condition('id_request_admin', $id)
-          ->execute();
-
-        // Delete all existing detail records for this request
-        $this->database->delete('request_admin_detail')
-          ->condition('id_request_admin', $id)
-          ->execute();
-
-        // Insert new detail records
-        foreach ($selected_products as $product) {
-          $this->database->insert('request_admin_detail')
-            ->fields([
-              'id_request_admin' => $id,
-              'id_product' => $product['product_id'],
-              'qty_request' => $product['qty'],
-            ])
-            ->execute();
-        }
-
-        $id_request = $id;
-      } else {
-        // Insert new record
-        $id_request = $this->database->insert('request_admin')
-          ->fields([
-            'no_request' => $no_request,
-            'tgl_request' => $tgl_request,
-            'uid_request' => \Drupal::currentUser()->id(),
-            'keterangan' => $keterangan,
-            'status_request' => 0,
-          ])
-          ->execute();
-
-        // Insert the product items
-        foreach ($selected_products as $product) {
-          $this->database->insert('request_admin_detail')
-            ->fields([
-              'id_request_admin' => $id_request,
-              'id_product' => $product['product_id'],
-              'qty_request' => $product['qty'],
-            ])
-            ->execute();
-        }
-      }
-
-      $this->messenger()->addStatus($this->t('Request has been saved successfully.'));
-      $form_state->setRedirect('data_request_admin.table');
+    // Handle file attachment
+    $file_upload = $form_state->getValue('file_attachment');
+    $existing_file_id = $form_state->getValue('existing_file_id');
+    // If editing and no new file was uploaded, use the existing file ID
+    if ($id && empty($file_upload) && !empty($existing_file_id)) {
+      $file_upload = $existing_file_id;
     }
-    catch (\Exception $e) {
-      // Rollback the transaction if something went wrong
-      $transaction->rollBack();
-      $this->messenger()->addError($this->t('An error occurred while saving your request. Please try again.'));
-      \Drupal::logger('data_request_admin')->error('Error saving request: @message', ['@message' => $e->getMessage()]);
+
+    $fields_data = [
+      'no_request' => $no_request,
+      'tgl_request' => $tgl_request,
+      'keterangan' => $keterangan,
+      'nama_pemesan' => $nama_pemesan,
+      'file_upload' => $file_upload,
+      'detail_data' => $selected_products,
+    ];
+    // Save the request using the service
+    $result = $this->dataSourceService->saveRequest($id, $fields_data);
+    if ($result) {
+      // Success
+      $response->addCommand(new MessageCommand($this->t('Request saved successfully.'), NULL, ['type' => 'status'], TRUE));
+      $response->addCommand(new CloseModalDialogCommand());
+      $response->addCommand(new RedirectCommand(Url::fromRoute('data_request_admin.table')->toString()));
     }
+    else {
+      // Error
+      $response->addCommand(new MessageCommand($this->t('Error saving request.'), NULL, ['type' => 'error'], TRUE));
+    }
+
+    return $response;
   }
 
+  /**
+   * Ajax cancel handler.
+   */
+  public function ajaxCancel(array &$form, FormStateInterface $form_state) {
+    $response = new AjaxResponse();
+    $response->addCommand(new CloseModalDialogCommand());
+    return $response;
+  }
 }

@@ -121,24 +121,12 @@ function template_preprocess_datatable(&$variables) {
     }
   }
 
-  // Generate a unique ID for the datatable.
-  if (!isset($variables['attributes']['id'])) {
-    $variables['attributes']['id'] = \Drupal::service('uuid')->generate();
-  }
-
-  // Attach the datatable library and settings.
-  $id = $variables['attributes']['id'];
-  $variables['#attached']['library'][] = 'datatables/datatables';
-  $variables['#attached']['library'][] = 'datatables/datatables.default';
-  $variables['#attached']['drupalSettings']['datatables'][$id]['datatable_settings'] = $variables['datatable_options'];
-  // Add TableTools if required.
-  if ($variables['tabletools']) {
-    $variables['#attached']['library'][] = 'datatables/datatables.tabletools';
-    $variables['#attached']['drupalSettings']['datatables'][$id]['tabletools'] = TRUE;
-  }
-
   // Use the table template as a base.
   template_preprocess_table($variables);
+
+  // Process DataTables specific options and library attachments
+  require_once __DIR__ . '/datatables.theme.inc';
+  _datatables_process_options($variables);
 }
 
 /**
@@ -160,7 +148,7 @@ function _datatables_preprocess_cell($cell) {
       unset($cell['children']);
     }
 
-    $attributes = $cell['datatable_options'];
+    $attributes = $cell;
     $cell = [];
     $cell['data'] = $data;
     foreach ($attributes as $key => $value){

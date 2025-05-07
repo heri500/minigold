@@ -1,0 +1,4 @@
+services:
+  minigold_request.request_admin_service:
+    class: Drupal\minigold_request\Service\RequestAdminService
+    arguments: ['@database', '@current_user', '@file_system', '@entity_type.manager']

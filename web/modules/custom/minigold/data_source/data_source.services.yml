@@ -1,8 +1,8 @@
 services:
   data_source.service:
     class: Drupal\data_source\Service\DataSourceService
-    # We pass the default database as a dependency, but the service
-    # will internally use the minigold_master connection
-    arguments: ['@database']
-    tags:
-      - { name: backend_overridable }
+    arguments:
+      - '@database'
+      - '@current_user'
+      - '@file_system'
+      - '@entity_type.manager'

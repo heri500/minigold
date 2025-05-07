@@ -1,0 +1,71 @@
+/**
+ * CSS for Request Admin functionality.
+ */
+
+.request-admin-list-container {
+  margin-bottom: 30px;
+}
+
+.request-admin-list-container .action-buttons {
+  margin: 20px 0;
+}
+
+.request-admin-list-container .table td,
+.request-admin-list-container .table th {
+  vertical-align: middle;
+}
+
+/* Form styles */
+.request-admin-form-container label {
+  font-weight: 500;
+}
+
+.form-actions {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.request-admin-form-container .form-required:after {
+  content: " *";
+  color: #e32;
+  font-weight: bold;
+}
+
+/* Autocomplete styling */
+.ui-autocomplete {
+  max-height: 200px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0;
+  border: 1px solid rgba(0,0,0,.125);
+  box-shadow: 0 2px 5px rgba(0,0,0,.1);
+  background-color: #fff;
+}
+.my-custom-dialog{
+  z-index: 2000;
+  background: #FFFFFF;
+}
+
+.ui-autocomplete .ui-menu-item {
+  padding: 5px 10px;
+  cursor: pointer;
+  list-style: none;
+  border-bottom: 1px solid rgba(0,0,0,.05);
+}
+
+.ui-autocomplete .ui-menu-item:hover {
+  background-color: #f8f9fa;
+}
+
+/* File attachment styles */
+.file-widget.form-managed-file {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.file-widget .file-info {
+  margin: 5px 10px;
+}
+

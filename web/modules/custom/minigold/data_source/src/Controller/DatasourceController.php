@@ -3,6 +3,8 @@
 namespace Drupal\data_source\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Link;
+use Drupal\Core\Url;
 use Drupal\data_source\Service\DataSourceService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -107,7 +109,7 @@ class DatasourceController extends ControllerBase {
       $row = [];
       // Add edit button if requested
       if ($editable) {
-        $row[] = '<div class="icon-edit"><a title="click to edit request" data-id="' . $record->{$field_id} . '" class="edit-icon" href="#"><i class="fa-solid fa-pen-to-square"></i></a></div>';
+        $row[] = '<div class="icon-edit"><a title="click to edit record" data-id="' . $record->{$field_id} . '" class="edit-icon" href="#"><i class="fa-solid fa-pen-to-square"></i></a></div>';
       }
       if ($deletable) {
         $row[] = '<div class="icon-edit"><a title="click to delete request" data-id="' . $record->{$field_id} . '" class="delete-icon icon-danger" href="#"><i class="fa-solid fa-trash-can"></i></a></div>';
@@ -221,7 +223,5 @@ class DatasourceController extends ControllerBase {
 
     return $params;
   }
-
-
 
 }
