@@ -1,8 +1,0 @@
-name: Minigold Request
-type: module
-description: 'Provides functionality for managing request admin records.'
-core_version_requirement: ^9 || ^10 || ^11
-package: Minigold
-dependencies:
-  - drupal:file
-  - fontawesome:fontawesome
