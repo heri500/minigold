@@ -120,7 +120,6 @@ function template_preprocess_datatable(&$variables) {
       }
     }
   }
-
   // Use the table template as a base.
   template_preprocess_table($variables);
 
@@ -139,7 +138,6 @@ function _datatables_preprocess_cell($cell) {
       $data = $cell['data'];
       unset($cell['data']);
     }
-
     // TableHeader and TableSelect generate cells with children instead of data.
     if (isset($cell['children'])) {
       foreach (Element::children($cell['children']) as $key) {

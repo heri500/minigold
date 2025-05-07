@@ -355,8 +355,8 @@ class DataSourceService {
       case 'request_admin':
         $field_data = [
           'id_request_admin', 'no_request', 'tgl_request', 'uid_request',
-          'keterangan', 'status_request', 'uid_changed', 'created', 'changed',
-          'nama_pemesan','file_attachment', 'file_id'
+          'nama_pemesan','keterangan', 'status_request', 'file_id', 'file_attachment',
+          'uid_changed', 'created', 'changed',
         ];
         break;
       case 'request_admin_detail':
@@ -410,12 +410,12 @@ class DataSourceService {
         break;
       case 'request_admin':
         $field_data = [
-          'no_request', 'tgl_request', 'keterangan'
+          'no_request', 'tgl_request', 'keterangan', 'nama_pemesan',
         ];
         break;
       case 'request_admin_detail':
         $field_data = [
-          'id_product', 'qty_request', 'status_detail'
+          'id_product', 'qty_request', 'status_detail',
         ];
         break;
       // Add cases for other tables here

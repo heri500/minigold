@@ -8,10 +8,10 @@ namespace Drupal\data_request_admin;
 final class StatusRequest {
   public const STATUS = [
     0 => 'New or Pending',
-    1 => 'Accepted',
-    2 => 'On Process',
-    3 => 'On Packaging',
-    4 => 'Partially Complete',
-    5 => 'Complete',
+    1 => 'On Process',
+    2 => 'On Packaging',
+    3 => 'Partially Complete',
+    4 => 'Complete',
+    5 => 'Delivered',
   ];
 }

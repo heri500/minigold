@@ -3,14 +3,13 @@
 namespace Drupal\data_source\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
-use Drupal\Core\Link;
-use Drupal\Core\Url;
 use Drupal\data_source\Service\DataSourceService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Drupal\data_request_admin\StatusRequest;
 use Drupal\user\Entity\User;
+use Drupal\data_source\Service\FileLinkGenerator;
 /**
  * Provides route responses for the Data Source module.
  */
@@ -38,9 +37,11 @@ class DatasourceController extends ControllerBase {
    * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
    *   The request stack.
    */
-  public function __construct(DataSourceService $data_source_service, RequestStack $request_stack) {
+  protected FileLinkGenerator $fileLinkGenerator;
+  public function __construct(DataSourceService $data_source_service, RequestStack $request_stack, FileLinkGenerator $file_link_generator) {
     $this->dataSourceService = $data_source_service;
     $this->requestStack = $request_stack;
+    $this->fileLinkGenerator = $file_link_generator;
   }
 
   /**
@@ -49,7 +50,8 @@ class DatasourceController extends ControllerBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('data_source.service'),
-      $container->get('request_stack')
+      $container->get('request_stack'),
+      $container->get('data_source.file_link_generator')
     );
   }
 
@@ -86,10 +88,9 @@ class DatasourceController extends ControllerBase {
     if (!$this->dataSourceService->tableExists($table_name)) {
       return new JsonResponse(['error' => 'Table ' . $table_name . ' does not exist.'], 404);
     }
-
+    $dt_params['table_name'] = $table_name;
     // Map DataTables parameters to our service parameters
     $params = $this->mapDataTablesParams($dt_params, $field_data);
-
     // Get data using the service
     $result = $this->dataSourceService->fetchRecords($table_name, $field_data, $params);
 
@@ -143,6 +144,9 @@ class DatasourceController extends ControllerBase {
             $date = '-';
           }
           $row[] = $date;
+        } else if (str_starts_with($field, 'file_id')) {
+          $file_link = $this->fileLinkGenerator->renderLink($record->{$field});
+          $row[] = $file_link;
         } else {
           $row[] = $record->{$field};
         }
@@ -174,7 +178,6 @@ class DatasourceController extends ControllerBase {
 
     // Search fields
     $params['search_fields'] = $this->dataSourceService->getSearchFields($dt_params['table_name'] ?? NULL);
-
     // Sorting (supporting both new and legacy DataTables parameters)
     if (!empty($dt_params['order']) && is_array($dt_params['order'])) {
       // New DataTables format

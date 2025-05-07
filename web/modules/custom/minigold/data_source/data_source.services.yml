@@ -6,3 +6,8 @@ services:
       - '@current_user'
       - '@file_system'
       - '@entity_type.manager'
+
+  data_source.file_link_generator:
+    class: Drupal\data_source\Service\FileLinkGenerator
+    arguments:
+      - '@file_url_generator'

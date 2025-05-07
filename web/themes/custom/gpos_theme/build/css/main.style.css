@@ -12675,6 +12675,11 @@ textarea.form-control-lg {
   --bs-btn-padding-x: .45rem;
   --bs-btn-font-size: .25rem;
 }
+.btn-xs-text {
+  --bs-btn-padding-y: .06rem;
+  --bs-btn-padding-x: .45rem;
+  --bs-btn-font-size: .8rem;
+}
 .btn-xs .svg-inline--fa.fa-trash{
   height: 13px;
 }
@@ -12708,4 +12713,7 @@ textarea.form-control-lg {
 }
 .ui-widget-overlay {
   z-index: 1999 !important;
+}
+#add-product-btn{
+  color: var(--bs-body-bg);
 }

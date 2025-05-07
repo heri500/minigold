@@ -67,19 +67,20 @@ final class DataRequestAdminController extends ControllerBase {
   public function __invoke(): array {
     if ($this->currentUser->hasPermission('administer request admin')) {
       $header = [
-        ['data' => '', 'datatable_options' => ['data-orderable' => 'false', 'class' => 'no-sort', 'searchable' => 'false']],
-        ['data' => '', 'datatable_options' => ['data-orderable' => 'false', 'class' => 'no-sort', 'searchable' => 'false']],
+        ['data' => '', 'class' => 'no-sort dt-orderable-none', 'data-orderable' => 'false', 'data-dt-order' => 'disable', 'data-searchable' => 'false'],
+        ['data' => '', 'class' => 'no-sort dt-orderable-none', 'data-orderable' => 'false', 'data-dt-order' => 'disable', 'data-searchable' => 'false'],
       ];
     }
     $header = [ ...$header,
       // -- set only have time ['data' => '', 'datatable_options' => ['data-orderable' => 'false', 'class' => 'no-sort', 'searchable' => 'false']],
-      ['data' => t('ID'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'false']],
-      ['data' => t('No, Req'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'true']],
-      ['data' => t('Tgl Request'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'true']],
-      ['data' => t('Request By'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'false']],
-      ['data' => t('Keterangan'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'true']],
-      ['data' => t('Status'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'false']],
-      ['data' => t('Change By'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'false']],
+      ['data' => t('ID'), 'data-orderable' => 'true', 'data-dt-order' => 'enable', 'data-searchable' => 'false'],
+      ['data' => t('No, Req'), 'data-orderable' => 'true', 'data-dt-order' => 'enable', 'data-searchable' => 'true'],
+      ['data' => t('Tgl Request'), 'data-orderable' => 'true', 'data-dt-order' => 'enable', 'data-searchable' => 'true'],
+      ['data' => t('Request By'), 'data-orderable' => 'true', 'data-dt-order' => 'enable', 'data-searchable' => 'false'],
+      ['data' => t('Nama Pemesan'), 'data-orderable' => 'true', 'data-dt-order' => 'enable', 'data-searchable' => 'true'],
+      ['data' => t('Keterangan'), 'data-orderable' => 'true', 'data-dt-order' => 'enable', 'data-searchable' => 'true'],
+      ['data' => t('Status'), 'data-orderable' => 'true', 'data-dt-order' => 'enable', 'data-searchable' => 'false'],
+      ['data' => t('File Attach'), 'data-orderable' => 'true', 'data-dt-order' => 'enable', 'data-searchable' => 'false'],
       //['data' => t('Created'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'false']],
       //['data' => t('Changed'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'false']],
     ];

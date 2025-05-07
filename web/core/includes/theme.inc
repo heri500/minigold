@@ -849,7 +849,6 @@ function template_preprocess_table(&$variables): void {
     }
   }
   $variables['header_columns'] = $header_columns;
-
   // Rows and footer have the same structure.
   $sections = ['rows' , 'footer'];
   foreach ($sections as $section) {
