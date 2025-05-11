@@ -12657,9 +12657,9 @@ textarea.form-control-lg {
   overflow-y: auto;
   overflow-x: hidden;
 }
-.icon-edit{
+.icon-edit, .disable-icon-edit{
   text-align: center;
-  padding: 0px 4px;
+  padding: 4px 5px;
 }
 .icon-danger{
   color: var(--bs-red) !important;
@@ -12716,4 +12716,86 @@ textarea.form-control-lg {
 }
 #add-product-btn{
   color: var(--bs-body-bg);
+}
+input[data-drupal-selector="edit-file-attachment-remove-button"] {
+  font-size: 0.9em;
+  padding: 4px 8px;
+  --bs-btn-color: #fff;
+  --bs-btn-bg: #dc3545;
+  --bs-btn-border-color: #dc3545;
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: rgb(187, 45.05, 58.65);
+  --bs-btn-hover-border-color: rgb(176, 42.4, 55.2);
+  --bs-btn-focus-shadow-rgb: 225, 83, 97;
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: rgb(176, 42.4, 55.2);
+  --bs-btn-active-border-color: rgb(165, 39.75, 51.75);
+  --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+  --bs-btn-disabled-color: #fff;
+  --bs-btn-disabled-bg: #dc3545;
+  --bs-btn-disabled-border-color: #dc3545;
+}
+table.dataTable td.dt-control{
+  padding: 8px 10px;
+}
+.child-row-details h5{
+  font-size: 1.05rem;
+}
+td:has(.child-row-details) {
+  border: 1px solid #999;
+}
+.datatable tbody tr td{
+  vertical-align: middle !important;
+}
+table.table.dataTable.table-striped>tbody>tr.selected>*{
+  box-shadow: inset 0 0 0 9999px rgb(166 166 168 / 95%) !important;
+}
+.request-admin-summary, .request-kemasan-summary{
+  font-size: 16px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+.request-admin-summary th, .request-admin-summary td,
+.request-kemasan-summary th, .request-kemasan-summary td{
+  padding: 0.25rem;
+}
+.request-admin-summary td div input.form-control,
+.request-kemasan-summary td div input.form-control{
+  padding: 0.25rem !important;
+}
+.request-title{
+  font-weight: 500;
+  border-bottom: 1px solid #ccc;
+  padding: 6px 0;
+  font-size: 1.15rem;
+}
+.ui-dialog .ui-dialog-buttonpane{
+  padding: 8px !important;
+}
+.ui-dialog .ui-dialog-buttonpane button{
+  margin: 0px !important;
+}
+.form-actions{
+  margin-top: 0 !important;
+}
+.hidden-column{
+  display: none;
+}
+#request-kemasan-summary-table tbody tr td:first-child,
+#request-produksi-table tbody tr td:first-child{
+  display: none;
+}
+.left-col {
+  float: left;
+  width: 25%;
+}
+
+.center-col {
+  float: left;
+  width: 50%;
+}
+
+.right-col {
+  float: left;
+  width: 25%;
 }

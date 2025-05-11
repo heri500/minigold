@@ -5,3 +5,7 @@ access request admin:
 administer request admin:
   title: 'administer request admin'
   description: 'Hak akses untuk me manage data request admin'
+
+administer request to production:
+  title: 'administer request to production'
+  description: 'Hak akses untuk menbuat request ke bagian produksi'

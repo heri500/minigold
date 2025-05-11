@@ -103,7 +103,7 @@ final class AddRequestAdmin extends FormBase {
           'source_field' => 'product_id',
           'field_name' => ['product_id','brand','product_name'],
         ];
-        $result = $this->dataSourceService->fetchRecordsByField($table_name, $field_data, $field_value, $left_join);
+        $result = $this->dataSourceService->fetchRecordsByField($table_name, $field_data, $field_value, $left_join,[],[]);
         $ArrData = [];
         foreach ($result as $rowData){
           $newRow = new \stdClass();
@@ -366,14 +366,14 @@ final class AddRequestAdmin extends FormBase {
       '#value' => $this->t('Batal'),
       '#attributes' => [
         'class' => ['btn btn-danger'],
+        'id' => 'cancel-request',
       ],
-      '#ajax' => [
-        'callback' => '::ajaxCancel',
-        'wrapper' => 'request-admin-form-wrapper',
-      ],
+      // Remove the AJAX configuration for the cancel button
     ];
 
-    //$form['#attached']['library'][] = 'data_request_admin/formrequestadmin_js';
+    // Give the form a unique ID in the DOM for Ajax targeting
+    $form['#prefix'] = '<div id="request-admin-form-wrapper">';
+    $form['#suffix'] = '</div>';
 
     return $form;
   }
@@ -384,7 +384,6 @@ final class AddRequestAdmin extends FormBase {
   public function validateForm(array &$form, FormStateInterface $form_state): void {
     $attachment = $form_state->getValue('file_attachment');
     $id = $form_state->getValue('id');
-
     // Only validate the file attachment if this is a new record or if a new file was uploaded
     if (empty($id) && empty($attachment)) {
       $form_state->setErrorByName('file_attachment', $this->t('Please upload a file attachment.'));
@@ -407,8 +406,12 @@ final class AddRequestAdmin extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
+    // Empty implementation as we're using Ajax for form submission
   }
 
+  /**
+   * Ajax submit handler.
+   */
   public function ajaxSubmit(array &$form, FormStateInterface $form_state) {
     $response = new AjaxResponse();
 
@@ -457,15 +460,6 @@ final class AddRequestAdmin extends FormBase {
       $response->addCommand(new MessageCommand($this->t('Error saving request.'), NULL, ['type' => 'error'], TRUE));
     }
 
-    return $response;
-  }
-
-  /**
-   * Ajax cancel handler.
-   */
-  public function ajaxCancel(array &$form, FormStateInterface $form_state) {
-    $response = new AjaxResponse();
-    $response->addCommand(new CloseModalDialogCommand());
     return $response;
   }
 }

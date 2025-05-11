@@ -74,6 +74,7 @@ class DatasourceController extends ControllerBase {
       ]);
     }
     $statuses = StatusRequest::STATUS;
+    $statusesColor = StatusRequest::STATUSCOLOR;
     $request = $this->requestStack->getCurrentRequest();
     $dt_params = $request->query->all();
 
@@ -106,14 +107,44 @@ class DatasourceController extends ControllerBase {
     $editable = !empty($dt_params['editable']) && $dt_params['editable'] == 1;
     $view_detail = !empty($dt_params['view_detail']) && $dt_params['view_detail'] == 1;
     $deletable = !empty($dt_params['deletable']) && $dt_params['deletable'] == 1;
+    if ($editable){
+      $canEdit = 1;
+    }else{
+      $canEdit = 0;
+    }
+    if ($deletable){
+      $canDelete = 1;
+    }else{
+      $canDelete = 0;
+    }
     foreach ($result['records'] as $record) {
+      foreach ($field_data as $field) {
+        if (str_starts_with($field, 'status')) {
+          if ($record->{$field} > 0){
+            $canEdit = 0;
+            $canDelete = 0;
+          }else{
+            $canEdit = 1;
+            $canDelete = 1;
+          }
+        }
+      }
       $row = [];
+      $row[] = '';
       // Add edit button if requested
       if ($editable) {
-        $row[] = '<div class="icon-edit"><a title="click to edit record" data-id="' . $record->{$field_id} . '" class="edit-icon" href="#"><i class="fa-solid fa-pen-to-square"></i></a></div>';
+        if ($canEdit) {
+          $row[] = '<div class="icon-edit"><a title="click to edit record" data-id="' . $record->{$field_id} . '" class="edit-icon" href="#"><i class="fa-solid fa-pen-to-square"></i></a></div>';
+        }else{
+          $row[] = '<div class="disable-icon-edit"><a title="record lock" data-id="' . $record->{$field_id} . '" class="lock-icon icon-danger" href="#"><i class="fa-solid fa-lock"></i></a></div>';
+        }
       }
       if ($deletable) {
-        $row[] = '<div class="icon-edit"><a title="click to delete request" data-id="' . $record->{$field_id} . '" class="delete-icon icon-danger" href="#"><i class="fa-solid fa-trash-can"></i></a></div>';
+        if ($canDelete) {
+          $row[] = '<div class="icon-edit"><a title="click to delete request" data-id="' . $record->{$field_id} . '" class="delete-icon icon-danger" href="#"><i class="fa-solid fa-trash-can"></i></a></div>';
+        }else{
+          $row[] = '<div class="disable-icon-edit"><a title="record lock" data-id="' . $record->{$field_id} . '" class="lock-icon icon-danger" href="#"><i class="fa-solid fa-lock"></i></a></div>';
+        }
       }
       if ($view_detail){
         $row[] = '<div class="icon-edit"><a title="click to view detail request" data-id="' . $record->{$field_id} . '" class="detail-icon" href="#"><i class="fa-solid fa-play"></i></a></div>';
@@ -121,7 +152,7 @@ class DatasourceController extends ControllerBase {
       // Add all fields to the row
       foreach ($field_data as $field) {
         if (str_starts_with($field, 'status')) {
-          $row[] = $statuses[$record->{$field}];
+          $row[] = '<div data-status="'.$record->{$field}.'" class="d-grid status-cell"><a class="btn btn-block btn-xs-text btn-'.$statusesColor[$record->{$field}].'">'.$statuses[$record->{$field}].'</a></div>';
         } else if (str_starts_with($field, 'uid')) {
           if (!empty($record->{$field})) {
             $user = User::load($record->{$field});
@@ -171,7 +202,6 @@ class DatasourceController extends ControllerBase {
    */
   protected function mapDataTablesParams(array $dt_params, array $fields) {
     $params = [];
-
     // Search value
     $params['search_value'] = !empty($dt_params['search']['value']) ? $dt_params['search']['value'] :
       (!empty($dt_params['sSearch']) ? $dt_params['sSearch'] : NULL);
@@ -185,10 +215,19 @@ class DatasourceController extends ControllerBase {
         (int) $dt_params['order'][0]['column'] : 0;
 
       // Adjust for editable column if present
-      if (!empty($dt_params['editable']) && $dt_params['editable'] == 1) {
-        $sort_index = max(0, $sort_index - 1);
+      if (!empty($dt_params['hasdetail']) && $dt_params['hasdetail'] == 1) {
+        if (!empty($dt_params['editable']) && $dt_params['editable'] == 1) {
+          $sort_index = max(0, $sort_index - 3);
+        }else{
+          $sort_index = max(0, $sort_index - 1);
+        }
+      }else{
+        if (!empty($dt_params['editable']) && $dt_params['editable'] == 1) {
+          $sort_index = max(0, $sort_index - 2);
+        }else{
+          $sort_index = max(0, $sort_index);
+        }
       }
-
       $params['order_by'] = isset($fields[$sort_index]) ? $fields[$sort_index] : $fields[0];
       $params['order_direction'] = isset($dt_params['order'][0]['dir']) ?
         strtoupper($dt_params['order'][0]['dir']) : 'ASC';
@@ -207,7 +246,6 @@ class DatasourceController extends ControllerBase {
       $params['order_direction'] = isset($dt_params['sSortDir_0']) ?
         strtoupper($dt_params['sSortDir_0']) : 'ASC';
     }
-
     // Pagination (supporting both new and legacy DataTables parameters)
     if (isset($dt_params['start']) && isset($dt_params['length'])) {
       // New DataTables format

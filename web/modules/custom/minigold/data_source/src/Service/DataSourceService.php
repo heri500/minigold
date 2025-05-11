@@ -195,7 +195,7 @@ class DataSourceService {
     ];
   }
 
-  public function fetchRecordsById($table_name, array $fields, $id_value = null) {
+  public function fetchRecordsById($table_name, array $fields, $id_value) {
     $full_table_name = $this->getFullTableName($table_name);
     if (empty($fields) || !is_array($fields)){
       $fields = $this->getTableFields($table_name);
@@ -209,26 +209,60 @@ class DataSourceService {
       $query->condition($db_and);
     }
     // Execute and get records
-    $records = $query->execute()->fetchObject();
-    return $records;
+    return $query->execute()->fetchObject();
   }
-  public function fetchRecordsByField($table_name, array $fields, array $field_value, array $left_join) {
+
+  public function fetchRecordsByIds($table_name, array $fields, array $id_value) {
     $full_table_name = $this->getFullTableName($table_name);
     if (empty($fields) || !is_array($fields)){
       $fields = $this->getTableFields($table_name);
     }
     $query = $this->database->select($full_table_name, 'ta')
       ->fields('ta', $fields);
+    $field_id = $this->getTableFieldsId($table_name);
+    if (!empty($field_id) && !empty($id_value)) {
+      $db_and = $query->andConditionGroup();
+      $db_and->condition($field_id, $id_value, 'IN');
+      $query->condition($db_and);
+    }
+    // Execute and get records
+    return $query->execute()->fetchAll();
+  }
+
+  /**
+   * @param $table_name
+   * @param array $fields
+   * @param array $field_value
+   * @param array $left_join
+   * @param array $add_expression
+   * @param array $group_by
+   * @return array
+   */
+  public function fetchRecordsByField(
+    $table_name, array $fields, array $field_value,
+    array $left_join, array $add_expression, array $group_by
+  ): array
+  {
+    $full_table_name = $this->getFullTableName($table_name);
+    $query = $this->database->select($full_table_name, 'ta');
+    if (!empty($fields)) {
+      $query->fields('ta', $fields);
+    }
     if (is_array($field_value) && !empty($field_value)) {
       $db_and = $query->andConditionGroup();
       foreach ($field_value as $field_cond) {
         // Use ILIKE for PostgreSQL case-insensitive search
         foreach ($field_cond as $key => $value){
-          $db_and->condition($key, $value);
+          if (is_array($value) && !empty($value)){
+            $db_and->condition($key, $value, 'IN');
+          }else {
+            $db_and->condition($key, $value);
+          }
         }
       }
       $query->condition($db_and);
     }
+    // check left join array and execute left join
     if (is_array($left_join) && !empty($left_join)) {
       $AliasTable = !empty($left_join['alias']) ? $left_join['alias'] : 'al';
       $query->leftJoin($left_join['table_name'], $AliasTable, 'ta.'.$left_join['target_field'].' = '.$AliasTable.'.'.$left_join['source_field']);
@@ -238,9 +272,59 @@ class DataSourceService {
         }
       }
     }
+
+    // check if there is any expression and execute it
+    if (is_array($add_expression) && !empty($add_expression)) {
+      foreach ($add_expression as $expression_data) {
+        $query->addExpression($expression_data['expression'], $expression_data['alias']);
+      }
+    }
+
+    // check if there is any group by and execute it
+    if (is_array($group_by) && !empty($group_by)) {
+      foreach ($group_by as $groupby_data) {
+        $query->groupBy($groupby_data['field']);
+      }
+    }
+
     // Execute and get records
     $records = $query->execute()->fetchAll();
     return $records;
+  }
+
+  public function createOptions($table_name, $field_id, $field_value = []){
+    $optionSelect = [];
+    $field_data = $this->getTableFields($table_name);
+    if (empty($field_id)){
+      $field_id = $this->getTableFieldsId($table_name);
+    }
+    if (!empty($table_name) && !empty($field_id) && !empty($field_value) && !empty($field_data)){
+      if (is_array($field_value)){
+        $new_field_value = [];
+        $expression_data = [];
+        foreach ($field_value as $fieldName){
+          if (str_starts_with($fieldName, 'tgl')){
+            $expression_data[] = ['expression' => 'DATE('.$fieldName.')', 'alias' => 'transform_date'];
+            $new_field_value[] = 'transform_date';
+          }else{
+            $new_field_value[] = $fieldName;
+          }
+        }
+        $field_value = $new_field_value;
+      }
+      $records = $this->fetchRecordsByField($table_name, $field_data,[],[],$expression_data,[]);
+      foreach ($records as $optionData){
+        if (is_array($field_value)){
+          $valueData = [];
+          foreach ($field_value as $fieldName){
+            $valueData[] = $optionData->{$fieldName};
+          }
+          $valueData = implode('-',$valueData);
+        }
+        $optionSelect[$optionData->{$field_id}] = $valueData;
+      }
+    }
+    return $optionSelect;
   }
 
   /**
@@ -303,6 +387,96 @@ class DataSourceService {
     }
   }
 
+  public function saveRequestProduction(array $values){
+    $transaction = $this->database->startTransaction();
+    try {
+      //Save Request Production
+      $request_produksi = [
+        'tgl_request_produksi' => $values['tgl_request'],
+        'keterangan' => $values['keterangan_produksi'],
+        'uid_request' => $this->currentUser->id(),
+      ];
+      $id_request_produksi = $this->insertTable('request_produksi', $request_produksi);
+      if (!empty($id_request_produksi)) {
+        if (!empty($values['detail_produksi'])) {
+          foreach ($values['detail_produksi'] as $dataDetailProduksi) {
+            $DetailProduksi = [
+              'id_request_produksi' => $id_request_produksi,
+              'produk_produksi' => 'Kepingan ' . $dataDetailProduksi['gramasi'],
+              'gramasi' => $dataDetailProduksi['gramasi'],
+              'total_qty' => $dataDetailProduksi['total_qty'],
+            ];
+            $this->insertTable('request_produksi_detail', $DetailProduksi);
+          }
+        }
+        //Save Request Admin Production
+        if (!empty($values['ids_request'])) {
+          foreach ($values['ids_request'] as $idRequestAdmin) {
+            $RequestAdminProduksi = [
+              'id_request_admin' => $idRequestAdmin,
+              'id_request_produksi' => $id_request_produksi,
+            ];
+            $this->insertTable('request_admin_produksi', $RequestAdminProduksi);
+          }
+        }
+      }
+      //End Save Request Production
+
+      //Save Request Kemasan
+      $request_kemasan = [
+        'tgl_request_kemasan' => $values['tgl_request'],
+        'keterangan' => $values['keterangan_kemasan'],
+        'uid_request' => $this->currentUser->id(),
+      ];
+      $id_request_kemasan = $this->insertTable('request_kemasan', $request_kemasan);
+      if (!empty($id_request_kemasan)) {
+        if (!empty($values['detail_kemasan'])) {
+          foreach ($values['detail_kemasan'] as $dataDetailKemasan) {
+            $DetailKemasan = [
+              'id_request_kemasan' => $id_request_kemasan,
+              'id_product' => $dataDetailKemasan['id_product'],
+              'total_qty' => $dataDetailKemasan['total_qty'],
+            ];
+            $this->insertTable('request_kemasan_detail', $DetailKemasan);
+          }
+        }
+        //Save Request Admin Kemasan
+        if (!empty($values['ids_request'])) {
+          foreach ($values['ids_request'] as $idRequestAdmin) {
+            $RequestAdminKemasan = [
+              'id_request_admin' => $idRequestAdmin,
+              'id_request_kemasan' => $id_request_kemasan,
+            ];
+            $this->insertTable('request_admin_kemasan', $RequestAdminKemasan);
+          }
+        }
+      }
+      //End Save Request Kemasan
+
+      //Update Request Admin
+      if (!empty($values['ids_request'])) {
+        foreach ($values['ids_request'] as $idRequestAdmin) {
+          $RequestAdmin = [
+            'status_request' => 1,
+          ];
+          $fieldsid_data = [
+            'field' => 'id_request_admin',
+            'value' => $idRequestAdmin,
+          ];
+          $this->updateTable('request_admin', $RequestAdmin,$fieldsid_data);
+        }
+      }
+      return $values['ids_request'];
+    }catch (\Exception $e) {
+      // Roll back the transaction if something went wrong
+      if (isset($transaction)) {
+        $transaction->rollBack();
+      }
+      \Drupal::logger('data_request_admin')->error('Error saving request production: @message', ['@message' => $e->getMessage()]);
+      return FALSE;
+    }
+  }
+
   public function insertTable($table_name, array $fields_data)
   {
     $query = null;
@@ -325,11 +499,13 @@ class DataSourceService {
   }
 
   public function deleteTableById($table_name, array $fieldsid_data){
+    $query = null;
     if (!empty($table_name) && !empty($fieldsid_data) && is_array($fieldsid_data)) {
-      $this->database->delete($table_name)
+      $query = $this->database->delete($table_name)
         ->condition($fieldsid_data['field'], $fieldsid_data['value'])
         ->execute();
     }
+    return $query;
   }
 
   /**

@@ -34,14 +34,6 @@ data_request_admin.product_autocomplete:
   options:
     no_cache: TRUE
 
-data_request_admin.form:
-  path: '/data-request-form'
-  defaults:
-    _form: '\Drupal\data_request_admin\Form\DataRequestForm'
-    _title: 'Data Request Form'
-  requirements:
-    _permission: 'access request admin'
-
 data_request_admin.modal_form:
   path: '/data-request-admin/add/{id}'
   defaults:
@@ -49,9 +41,32 @@ data_request_admin.modal_form:
     _title: 'Request Admin Form'
     id: 0
   requirements:
-    _permission: 'access request admin'
+    _permission: 'administer request admin'
   options:
     _admin_route: TRUE
     parameters:
       id:
         type: integer
+
+data_request_admin.detail_request:
+  path: '/data-request-admin/detailrequest/{id}'
+  defaults:
+    _controller: '\Drupal\data_request_admin\Controller\DataRequestAdminController::detailRequest'
+    _title: 'Detail Request'
+  requirements:
+    _permission: 'access request admin'
+    id: \d+   # Only allow numeric IDs
+
+data_request_admin.request_production:
+  path: '/data-request-admin/requestproduction/{id}'
+  defaults:
+    _controller: '\Drupal\data_request_admin\Controller\DataRequestAdminController::modalRequestProduksi'
+    _title: 'Request Admin Form'
+    id: ''
+  requirements:
+    _permission: 'administer request to production'
+  options:
+    _admin_route: TRUE
+  parameters:
+    id:
+      type: string
