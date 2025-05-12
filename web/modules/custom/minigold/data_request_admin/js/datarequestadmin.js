@@ -296,7 +296,7 @@
 
       function attachEventHandlers() {
         // Reattach your event handlers for dynamically created elements
-        $('.delete-icon').off('click.deleteRequestIcon').on('click.deleteRequestIcon', function(e) {
+        /*$('.delete-icon').off('click.deleteRequestIcon').on('click.deleteRequestIcon', function(e) {
           e.preventDefault();
 
           let idRequest = $(this).data('id');
@@ -313,7 +313,7 @@
           if (deleteConfirmation) {
             window.location.href = deleteUrl;
           }
-        });
+        });*/
 
         $('.edit-icon').off('click.editRequesticon').on('click.editRequesticon', function(e) {
           e.preventDefault();
@@ -582,7 +582,8 @@
         updateProductTable();
       });
 
-      $(document).off('click.deleteRequestIcon').on('click.deleteRequestIcon', '.delete-icon', function (e) {
+      $(document).off('click.deleteRequestIcon');
+      $(document).on('click.deleteRequestIcon', '.delete-icon', function (e) {
         e.preventDefault();
 
         let idRequest = $(this).data('id');

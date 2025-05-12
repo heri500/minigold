@@ -119,7 +119,7 @@ final class DataRequestAdminController extends ControllerBase {
     // Default route is with ID 0 for adding new production requests
     $add_production_button = Link::fromTextAndUrl(
       $this->t('Request Production'),
-      Url::fromRoute('data_request_admin.request_production', ['id' => '0'])
+      Url::fromRoute('data_request_admin.request_production', ['id' => ''])
     )->toRenderable();
 
     $add_production_button['#attributes'] = [
@@ -224,17 +224,20 @@ final class DataRequestAdminController extends ControllerBase {
   public function modalRequestProduksi($id = '') {
     $response = new AjaxResponse();
 
-    // Build the form
-    $form = $this->formBuilder->getForm('Drupal\data_request_admin\Form\FormRequestProduksi', $id);
+    if ($id != '') {
+      // Build the form
+      $form = $this->formBuilder->getForm('Drupal\data_request_admin\Form\FormRequestProduksi', $id);
+      // Add the form to a modal dialog
+      $title = $this->t('Create Request Produksi');
+      $response->addCommand(new OpenModalDialogCommand($title, $form, [
+        'width' => '700',
+        'dialogClass' => 'request-produksi-modal',
+      ]));
 
-    // Add the form to a modal dialog
-    $title = $this->t('Create Request Produksi');
-    $response->addCommand(new OpenModalDialogCommand($title, $form, [
-      'width' => '700',
-      'dialogClass' => 'request-produksi-modal',
-    ]));
-
-    return $response;
+      return $response;
+    }else{
+      return [];
+    }
   }
 
   public function deleteRequestAdmin($id = NULL) {

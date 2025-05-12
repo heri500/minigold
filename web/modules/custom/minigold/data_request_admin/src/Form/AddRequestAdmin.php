@@ -208,7 +208,7 @@ final class AddRequestAdmin extends FormBase {
         // Add description about existing file
         $file = File::load($current_file_id);
         if ($file) {
-          $file_field_options['#description'] = $this->t('Current file: @filename. Upload a new file to replace it or leave empty to keep the current file.',
+          $file_field_options['#description'] = $this->t('Current file: @filename. Upload a new file to replace it',
             ['@filename' => $file->getFilename()]);
         }
       }

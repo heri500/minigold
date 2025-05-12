@@ -51,7 +51,7 @@ class FileLinkGenerator {
       $url = $file->createFileUrl(); // or use file_url_generator if preferred
       $filename = Xss::filter($file->getFilename());
 
-      return '<a title="click to open file in new tab" class="btn btn-warning btn-xs-text" href="' . $url . '" target="_blank" rel="noopener noreferrer">' . $filename . '</a>';
+      return '<a title="click to open file in new tab" class="btn btn-info btn-xs-text" href="' . $url . '" target="_blank" rel="noopener noreferrer">' . $filename . '</a>';
     }
 
     return 'File not found.';

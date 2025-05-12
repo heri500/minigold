@@ -79,7 +79,10 @@ final class FormRequestProduksi extends FormBase {
       $response->send();
       return [];
     }
-
+    if (count($splitId) == 1 && $splitId[0] == 0){
+      \Drupal::messenger()->addWarning($this->t('Form not ready.'));
+      return [];
+    }
     $table_name = 'request_admin';
     $field_data = $this->dataSourceService->getTableFields($table_name);
     $requestData = $this->dataSourceService->fetchRecordsByIds($table_name, $field_data, $splitId);
