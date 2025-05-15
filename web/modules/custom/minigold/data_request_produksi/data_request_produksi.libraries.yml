@@ -1,0 +1,14 @@
+# Custom library for general purposes.
+datarequestproduksi_js:
+  version: 1.x
+  js:
+    js/datarequestproduksi.js: { }
+  css:
+    theme:
+      css/request-produksi.css: { }
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/drupalSettings
+    - core/once
+    - core/drupal.ajax

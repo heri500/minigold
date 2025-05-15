@@ -176,7 +176,7 @@ class DatasourceController extends ControllerBase {
           }
           $row[] = $date;
         } else if (str_starts_with($field, 'file_id')) {
-          $file_link = $this->fileLinkGenerator->renderLink($record->{$field});
+          $file_link = '<div class="d-grid status-cell">'.$this->fileLinkGenerator->renderLink($record->{$field}).'</div>';
           $row[] = $file_link;
         } else {
           $row[] = $record->{$field};

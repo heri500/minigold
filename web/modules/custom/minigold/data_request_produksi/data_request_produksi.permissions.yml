@@ -1,0 +1,7 @@
+access data request produksi:
+  title: 'access data request produksi'
+  description: 'Hak akses untuk melihat data request produksi'
+
+administer data request produksi:
+  title: 'administer data request produksi'
+  description: 'Hak akses untuk mengubah status produksi dan laporan hasil produksi'

@@ -12778,11 +12778,13 @@ table.table.dataTable.table-striped>tbody>tr.selected>*{
 .form-actions{
   margin-top: 0 !important;
 }
-.hidden-column{
+.hidden-column, .hidden-obj{
   display: none;
 }
 #request-kemasan-summary-table tbody tr td:first-child,
-#request-produksi-table tbody tr td:first-child{
+#request-produksi-table tbody tr td:first-child,
+#edit-request-produksi-table tr td:first-child,
+#edit-request-produksi-table tr td:nth-child(2){
   display: none;
 }
 .left-col {
@@ -12798,4 +12800,15 @@ table.table.dataTable.table-striped>tbody>tr.selected>*{
 .right-col {
   float: left;
   width: 25%;
+}
+.column-id{
+  width: 50px !important;
+}
+.datatable.dataTable{
+  border-top: 1px solid #ddd !important;
+}
+.edit-request-produksi-wrapper{
+  font-size: 16px;
+  max-height: 300px;
+  overflow-y: auto;
 }

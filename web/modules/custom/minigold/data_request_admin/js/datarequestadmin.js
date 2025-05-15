@@ -295,26 +295,6 @@
       }
 
       function attachEventHandlers() {
-        // Reattach your event handlers for dynamically created elements
-        /*$('.delete-icon').off('click.deleteRequestIcon').on('click.deleteRequestIcon', function(e) {
-          e.preventDefault();
-
-          let idRequest = $(this).data('id');
-
-          if (!idRequest) {
-            alert('Error: Missing Request ID.');
-            return;
-          }
-
-          // Construct the URL using drupalSettings
-          let baseUrl = drupalSettings.path.baseUrl || '/';
-          let deleteUrl = baseUrl + 'data-request-admin/delete/' + idRequest;
-          const deleteConfirmation = confirm('Yakin ingin menghapus request ini...??!');
-          if (deleteConfirmation) {
-            window.location.href = deleteUrl;
-          }
-        });*/
-
         $('.edit-icon').off('click.editRequesticon').on('click.editRequesticon', function(e) {
           e.preventDefault();
 

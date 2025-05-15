@@ -243,3 +243,15 @@ ALTER TABLE IF EXISTS public.request_kemasan_detail
 
 ALTER TABLE IF EXISTS public.request_produksi_detail
   ADD COLUMN total_qty_actual integer DEFAULT 0;
+-- Column: public.request_produksi_detail.changed
+
+-- ALTER TABLE IF EXISTS public.request_produksi_detail DROP COLUMN IF EXISTS changed;
+
+ALTER TABLE IF EXISTS public.request_produksi_detail
+  ADD COLUMN changed timestamp without time zone;
+-- Column: public.request_produksi_detail.uid_changed
+
+-- ALTER TABLE IF EXISTS public.request_produksi_detail DROP COLUMN IF EXISTS uid_changed;
+
+ALTER TABLE IF EXISTS public.request_produksi_detail
+  ADD COLUMN uid_changed integer;

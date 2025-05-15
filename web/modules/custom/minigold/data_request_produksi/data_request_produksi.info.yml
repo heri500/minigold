@@ -1,0 +1,7 @@
+name: 'Data Request Produksi'
+type: module
+description: 'Module yang menangani manajemen data produksi'
+package: Minigold
+core_version_requirement: ^10 || ^11
+dependencies:
+  - data_request_admin:data_request_admin

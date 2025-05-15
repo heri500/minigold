@@ -170,6 +170,7 @@ final class FormRequestProduksi extends FormBase {
       ['data' => '', 'class' => 'hidden-column'],
       ['data' => 'Kepingan'],
       ['data' => 'Total Qty Requested'],
+      ['data' => '', 'class' => 'hidden-column'],
     ];    // Table header
     $form['request_admin_summary'] = [
       '#type' => 'table',
@@ -193,6 +194,10 @@ final class FormRequestProduksi extends FormBase {
         '#size' => 5,
         '#attributes' => ['class' => ['total-qty-input']],
       ];
+      $form['request_admin_summary'][$index]['requested_qty_keping'] = [
+        '#type' => 'hidden',
+        '#default_value' => $row->total_qty,
+      ];
     }
     $form['keterangan_produksi'] = [
       '#type' => 'textfield',
@@ -212,6 +217,7 @@ final class FormRequestProduksi extends FormBase {
       ['data' => '', 'class' => 'hidden-column'],
       ['data' => 'Kemasan'],
       ['data' => 'Total Qty Requested'],
+      ['data' => '', 'class' => 'hidden-column'],
     ];    // Table header
     $form['request_kemasan_summary'] = [
       '#type' => 'table',
@@ -234,6 +240,10 @@ final class FormRequestProduksi extends FormBase {
         '#default_value' => $row->total_qty,
         '#size' => 5,
         '#attributes' => ['class' => ['total-qty-input']],
+      ];
+      $form['request_kemasan_summary'][$index]['requested_qty_kemasan'] = [
+        '#type' => 'hidden',
+        '#default_value' => $row->total_qty,
       ];
     }
     $form['keterangan_kemasan'] = [
@@ -306,7 +316,6 @@ final class FormRequestProduksi extends FormBase {
     $values['keterangan_produksi'] = $form_state->getValue('keterangan_produksi');
     $values['detail_kemasan'] = $form_state->getValue('request_kemasan_summary');
     $values['keterangan_kemasan'] = $form_state->getValue('keterangan_produksi');
-    dpm($values);
     $result = $this->dataSourceService->saveRequestProduction($values);
 
     if ($result) {

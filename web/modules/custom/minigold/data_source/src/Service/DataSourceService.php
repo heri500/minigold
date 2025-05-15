@@ -8,7 +8,7 @@ use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\file\FileInterface;
-use Drupal\Core\Url;
+
 /**
  * Service for data source operations.
  */
@@ -405,6 +405,7 @@ class DataSourceService {
               'produk_produksi' => 'Kepingan ' . $dataDetailProduksi['gramasi'],
               'gramasi' => $dataDetailProduksi['gramasi'],
               'total_qty' => $dataDetailProduksi['total_qty'],
+              'total_qty_actual' => $dataDetailProduksi['requested_qty_keping'],
             ];
             $this->insertTable('request_produksi_detail', $DetailProduksi);
           }
@@ -436,6 +437,7 @@ class DataSourceService {
               'id_request_kemasan' => $id_request_kemasan,
               'id_product' => $dataDetailKemasan['id_product'],
               'total_qty' => $dataDetailKemasan['total_qty'],
+              'total_qty_actual' => $dataDetailKemasan['requested_qty_kemasan'],
             ];
             $this->insertTable('request_kemasan_detail', $DetailKemasan);
           }
@@ -473,6 +475,55 @@ class DataSourceService {
         $transaction->rollBack();
       }
       \Drupal::logger('data_request_admin')->error('Error saving request production: @message', ['@message' => $e->getMessage()]);
+      return FALSE;
+    }
+  }
+
+  /**
+   * @param array $values
+   * @return void
+   */
+  public function updateRequestProduction(array $values){
+    if (!empty($values['id_request'])) {
+      $transaction = $this->database->startTransaction();
+      try {
+        //Update Request Production
+        $request_produksi = [
+          'keterangan' => $values['keterangan_produksi'],
+          'uid_changed' => $this->currentUser->id(),
+          'changed' => date('Y-m-d H:i:s'),
+          'status_produksi' => $values['status_produksi']
+        ];
+        $fieldsid_data = [
+          'field' => 'id_request_produksi',
+          'value' => $values['id_request'],
+        ];
+        $this->updateTable('request_produksi', $request_produksi, $fieldsid_data);
+        foreach ($values['detail_produksi'] as $DetailProduksi){
+          $fieldsid_data = [
+            'field' => 'id_request_produksi_detail',
+            'value' => $values['id_request_detail'],
+          ];
+          $request_detail_produksi = [
+            'total_qty' => $values['total_qty'],
+            'uid_changed' => $this->currentUser->id(),
+            'changed' => date('Y-m-d H:i:s'),
+          ];
+          $this->updateTable('request_produksi_detail', $request_detail_produksi, $fieldsid_data);
+        }
+        //End Save Request Production
+        return $values['id_request'];
+      } catch (\Exception $e) {
+        // Roll back the transaction if something went wrong
+        if (isset($transaction)) {
+          $transaction->rollBack();
+        }
+        \Drupal::logger('data_request_admin')->error('Error saving request production: @message', ['@message' => $e->getMessage()]);
+        return FALSE;
+      }
+    }else{
+      $messages = t('Request Production ID is empty');
+      \Drupal::logger('data_request_admin')->error('Error saving request production: @message', ['@message' => $messages]);
       return FALSE;
     }
   }
@@ -541,6 +592,18 @@ class DataSourceService {
           'uid_created', 'uid_changed', 'created', 'changed'
         ];
         break;
+      case 'request_produksi':
+        $field_data = [
+          'id_request_produksi', 'tgl_request_produksi', 'uid_request', 'uid_changed',
+          'keterangan', 'status_produksi', 'created', 'changed',
+        ];
+        break;
+      case 'request_produksi_detail':
+        $field_data = [
+          'id_request_produksi_detail', 'id_request_produksi', 'produk_produksi', 'gramasi',
+          'total_qty', 'total_qty_actual', 'status_produksi_produk', 'uid_created', 'created',
+        ];
+        break;
       // Add cases for other tables here
 
     }
@@ -559,6 +622,9 @@ class DataSourceService {
         break;
       case 'request_admin_detail':
         $field_id = 'id_request_admin_detail';
+        break;
+      case 'request_produksi':
+        $field_id = 'id_request_produksi';
         break;
       // Add cases for other tables here
 
@@ -592,6 +658,11 @@ class DataSourceService {
       case 'request_admin_detail':
         $field_data = [
           'id_product', 'qty_request', 'status_detail',
+        ];
+        break;
+      case 'request_produksi':
+        $field_data = [
+          'tgl_request_produksi', 'keterangan'
         ];
         break;
       // Add cases for other tables here

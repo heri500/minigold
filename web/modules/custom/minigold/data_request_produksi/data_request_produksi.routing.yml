@@ -1,0 +1,38 @@
+data_request_produksi.table:
+  path: '/data-request-produksi/table'
+  defaults:
+    _title: 'Tabel Request Produksi'
+    _controller: '\Drupal\data_request_produksi\Controller\DataRequestProduksiController'
+  requirements:
+    _permission: 'access data request produksi'
+
+data_request_produksi.modal_form:
+  path: '/data-request-produksi/add/{id}'
+  defaults:
+    _controller: '\Drupal\data_request_produksi\Controller\DataRequestProduksiController::modalForm'
+    _title: 'Request Admin Form'
+    id: 0
+  requirements:
+    _permission: 'administer data request produksi'
+  options:
+    _admin_route: TRUE
+    parameters:
+      id:
+        type: integer
+
+data_request_produksi.edit_request_production:
+  path: '/data-request-produksi/edit-request-production'
+  defaults:
+    _title: 'Edit Request Production'
+    _form: 'Drupal\data_request_produksi\Form\EditRequestProduction'
+  requirements:
+    _permission: 'administer data request produksi'
+
+data_request_produksi.detail_request:
+  path: '/data-request-produksi/detailrequest/{id}'
+  defaults:
+    _controller: '\Drupal\data_request_produksi\Controller\DataRequestProduksiController::detailRequest'
+    _title: 'Detail Request'
+  requirements:
+    _permission: 'access data request produksi'
+    id: \d+   # Only allow numeric IDs
