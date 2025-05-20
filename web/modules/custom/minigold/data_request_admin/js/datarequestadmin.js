@@ -117,20 +117,34 @@
                 // Create a more detailed view with the response data
                 detailHtml += '<div class="row">';
                 let statusProduksi = '-';
-                if (typeof data['info'].production_status !== 'undefined'){
+                if (data['info'].production_status != null){
                   statusProduksi = '<div class="d-grid status-cell">' +
                     '<a class="btn btn-block btn-xs-text btn-'+
                     drupalSettings.dataRequestAdmin.status_color[data['info'].production_status] +'">' +
                     drupalSettings.dataRequestAdmin.status[data['info'].production_status] +'</a>' +
                     '</div>';
+                }else{
+                  data['info'].related_production = '-';
                 }
                 let statusKemasan = '-';
-                if (typeof data['info'].kemasan_status !== 'undefined'){
+                if (data['info'].kemasan_status != null){
                   statusKemasan = '<div class="d-grid status-cell">' +
                     '<a class="btn btn-block btn-xs-text btn-'+
                     drupalSettings.dataRequestAdmin.status_color[data['info'].kemasan_status] +'">' +
                     drupalSettings.dataRequestAdmin.status[data['info'].kemasan_status] +'</a>' +
                     '</div>';
+                }else{
+                  data['info'].related_kemasan = '-';
+                }
+                let statusPackaging = '-';
+                if (data['info'].packaging_status != null){
+                  statusPackaging = '<div class="d-grid status-cell">' +
+                    '<a class="btn btn-block btn-xs-text btn-'+
+                    drupalSettings.dataRequestAdmin.status_color[data['info'].packaging_status] +'">' +
+                    drupalSettings.dataRequestAdmin.status[data['info'].packaging_status] +'</a>' +
+                    '</div>';
+                }else{
+                  data['info'].related_packaging = '-';
                 }
                 // Add products section if available
                 if (data && data['detail'].length > 0) {
@@ -166,6 +180,14 @@
                     '<tr>' +
                     '<td>Status Kemasan</td>' +
                     '<td>'+ statusKemasan +'</td>' +
+                    '</tr>' +
+                    '<tr>' +
+                    '<td>Packaging</td>' +
+                    '<td>Packaging ID - '+ data['info'].related_packaging +'</td>' +
+                    '</tr>' +
+                    '<tr>' +
+                    '<td>Status Packaging</td>' +
+                    '<td>'+ statusPackaging +'</td>' +
                     '</tr>' +
                     '</tbody></table></div>' +
                     '<div class="col-7">' +

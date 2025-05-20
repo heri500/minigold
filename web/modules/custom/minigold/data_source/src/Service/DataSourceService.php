@@ -1197,6 +1197,14 @@ class DataSourceService {
           'expression' => '(SELECT status_kemasan FROM request_kemasan WHERE id_production_process = ta.id_production_process)',
           'alias' => 'kemasan_status'
         ];
+        $expressions[] = [
+          'expression' => '(SELECT id_request_packaging FROM request_packaging WHERE id_production_process = ta.id_production_process)',
+          'alias' => 'related_packaging'
+        ];
+        $expressions[] = [
+          'expression' => '(SELECT status_packaging FROM request_packaging WHERE id_production_process = ta.id_production_process)',
+          'alias' => 'packaging_status'
+        ];
         break;
       case 'product':
         $expressions[] = [
