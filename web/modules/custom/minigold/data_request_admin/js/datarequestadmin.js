@@ -116,11 +116,59 @@
 
                 // Create a more detailed view with the response data
                 detailHtml += '<div class="row">';
-
+                let statusProduksi = '-';
+                if (typeof data['info'].production_status !== 'undefined'){
+                  statusProduksi = '<div class="d-grid status-cell">' +
+                    '<a class="btn btn-block btn-xs-text btn-'+
+                    drupalSettings.dataRequestAdmin.status_color[data['info'].production_status] +'">' +
+                    drupalSettings.dataRequestAdmin.status[data['info'].production_status] +'</a>' +
+                    '</div>';
+                }
+                let statusKemasan = '-';
+                if (typeof data['info'].kemasan_status !== 'undefined'){
+                  statusKemasan = '<div class="d-grid status-cell">' +
+                    '<a class="btn btn-block btn-xs-text btn-'+
+                    drupalSettings.dataRequestAdmin.status_color[data['info'].kemasan_status] +'">' +
+                    drupalSettings.dataRequestAdmin.status[data['info'].kemasan_status] +'</a>' +
+                    '</div>';
+                }
                 // Add products section if available
-                if (data && data.length > 0) {
+                if (data && data['detail'].length > 0) {
                   detailHtml += '<div class="row">' +
-                    '<div class="col-12">' +
+                    '<div class="col-5">' +
+                    '<h5>Request Info</h5>' +
+                    '<table class="table table-sm table-striped">' +
+                    '<tbody>' +
+                    '<tr>' +
+                    '<td>No. Request</td>' +
+                    '<td>'+ data['info'].no_request +'</td>' +
+                    '</tr>' +
+                    '<tr>' +
+                    '<td>Changed By</td>' +
+                    '<td>'+ data['info'].uid_changed +'</td>' +
+                    '</tr>' +
+                    '<tr>' +
+                    '<td>Changed On</td>' +
+                    '<td>'+ data['info'].changed +'</td>' +
+                    '</tr>' +
+                    '<tr>' +
+                    '<td>Produksi Keping</td>' +
+                    '<td>Produksi ID - '+ data['info'].related_production +'</td>' +
+                    '</tr>' +
+                    '<tr>' +
+                    '<td>Status Produksi</td>' +
+                    '<td>'+ statusProduksi +'</td>' +
+                    '</tr>' +
+                    '<tr>' +
+                    '<td>Produksi Kemasan</td>' +
+                    '<td>Produksi Kemasan ID - '+ data['info'].related_kemasan +'</td>' +
+                    '</tr>' +
+                    '<tr>' +
+                    '<td>Status Kemasan</td>' +
+                    '<td>'+ statusKemasan +'</td>' +
+                    '</tr>' +
+                    '</tbody></table></div>' +
+                    '<div class="col-7">' +
                     '<h5>Requested Products</h5>' +
                     '<table class="table table-sm table-striped">' +
                     '<thead>' +
@@ -133,7 +181,7 @@
                     '</thead>' +
                     '<tbody>';
 
-                  data.forEach(function(product, index) {
+                  data['detail'].forEach(function(product, index) {
                     detailHtml += '<tr>' +
                       '<td>' + (index + 1) + '</td>' +
                       '<td>' + (product.brand || '-') + '</td>' +

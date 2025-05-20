@@ -1,0 +1,8 @@
+name: 'Data Request Packaging'
+type: module
+description: 'Module untuk memanage data request packaging, setelah produksi dan kemasan selesai untuk dijadikan product minigold'
+package: Minigold
+core_version_requirement: ^10 || ^11
+dependencies:
+  - data_request_kemasan:data_request_kemasan
+  - data_request_produksi:data_request_produksi

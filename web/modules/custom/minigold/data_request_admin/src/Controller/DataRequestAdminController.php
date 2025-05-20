@@ -10,6 +10,7 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Form\FormBuilderInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Render\RendererInterface;
+use Drupal\user\Entity\User;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\data_request_admin\Form\AddRequestAdmin;
 use Drupal\Core\Session\AccountInterface;
@@ -17,6 +18,7 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Drupal\Core\Url;
 use Drupal\data_source\Service\DataSourceService;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Drupal\data_request_admin\StatusRequest;
 
 /**
  * Returns responses for Data request admin routes.
@@ -86,17 +88,15 @@ final class DataRequestAdminController extends ControllerBase {
     $header = [...$header,
       // -- set only have time ['data' => '', 'datatable_options' => ['data-orderable' => 'false', 'class' => 'no-sort', 'searchable' => 'false']],
       ['data' => t('ID'), 'data-orderable' => 'true', 'data-dt-order' => 'enable', 'data-searchable' => 'false'],
-      ['data' => t('No, Req'), 'data-orderable' => 'true', 'data-dt-order' => 'enable', 'data-searchable' => 'true'],
+      ['data' => t('No. Req'), 'data-orderable' => 'true', 'data-dt-order' => 'enable', 'data-searchable' => 'true'],
       ['data' => t('Tgl Request'), 'data-orderable' => 'true', 'data-dt-order' => 'enable', 'data-searchable' => 'true'],
       ['data' => t('Request By'), 'data-orderable' => 'true', 'data-dt-order' => 'enable', 'data-searchable' => 'false'],
       ['data' => t('Nama Pemesan'), 'data-orderable' => 'true', 'data-dt-order' => 'enable', 'data-searchable' => 'true'],
       ['data' => t('Keterangan'), 'data-orderable' => 'true', 'data-dt-order' => 'enable', 'data-searchable' => 'true'],
       ['data' => t('Status'), 'data-orderable' => 'true', 'data-dt-order' => 'enable', 'data-searchable' => 'false'],
       ['data' => t('File Attach'), 'data-orderable' => 'true', 'data-dt-order' => 'enable', 'data-searchable' => 'false'],
-      //['data' => t('Created'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'false']],
-      //['data' => t('Changed'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'false']],
     ];
-    $rows = [];
+
     $rowData = array_fill(0, count($header), '');
     $rows[] = $rowData;
 
@@ -135,7 +135,9 @@ final class DataRequestAdminController extends ControllerBase {
 
     // Generate a unique ID for the DataTable
     $table_id = 'data-request-admin-table';
-
+    // Get status array and color
+    $statuses = StatusRequest::STATUS;
+    $statusesColor = StatusRequest::STATUSCOLOR;
     return [
       'buttons' => [
         '#type' => 'container',
@@ -165,6 +167,8 @@ final class DataRequestAdminController extends ControllerBase {
               'modalFormUrl' => Url::fromRoute('data_request_admin.modal_form', ['id' => 0])->toString(),
               'tableId' => $table_id,
               'colIdIdx' => $ColIdIdx,
+              'status' => $statuses,
+              'status_color' => $statusesColor,
             ],
           ],
         ],
@@ -265,8 +269,9 @@ final class DataRequestAdminController extends ControllerBase {
   public function detailRequest($id) {
     $data = [];
     if (!empty($id)) {
+      $field_data1 = $this->dataSourceService->getTableFields('request_admin');
       $table_name = 'request_admin_detail';
-      $field_data = $this->dataSourceService->getTableFields($table_name);
+      $field_data2 = $this->dataSourceService->getTableFields($table_name);
       $field_value[] = ['id_request_admin' => $id];
       $left_join = [
         'alias' => 'p',
@@ -275,7 +280,20 @@ final class DataRequestAdminController extends ControllerBase {
         'source_field' => 'product_id',
         'field_name' => ['product_id', 'brand', 'product_name'],
       ];
-      $result = $this->dataSourceService->fetchRecordsByField($table_name, $field_data, $field_value, $left_join,[],[]);
+      $result = [];
+      $result['info'] = $this->dataSourceService->fetchRecordsById('request_admin', $field_data1, $id);
+      if (!empty($result['info']->uid_changed)){
+        $user = User::load($result['info']->uid_changed);
+        $username = $user->getAccountName();
+        $result['info']->uid_changed = $username;
+        $date = (new \DateTime($result['info']->changed))->format('d-m-Y H:i');
+        $result['info']->changed = $date;
+      } else {
+        $result['info']->uid_changed = '-';
+        $result['info']->changed = '-';
+      }
+
+      $result['detail'] = $this->dataSourceService->fetchRecordsByField($table_name, $field_data2, $field_value, $left_join,[],[]);
       // Example static data – replace with DB query or service logic as needed.
       $data = [
         'data' => $result,

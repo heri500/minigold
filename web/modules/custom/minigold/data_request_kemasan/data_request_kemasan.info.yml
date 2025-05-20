@@ -1,0 +1,7 @@
+name: 'Data Request Kemasan'
+type: module
+description: 'Module untuk memanage data request kemasan dan proses produksi kemasan'
+package: Minigold
+core_version_requirement: ^10 || ^11
+dependencies:
+  - data_request_admin:data_request_admin

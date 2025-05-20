@@ -1,0 +1,11 @@
+# Custom library for general purposes.
+datarequestpackaging_js:
+  version: 1.x
+  js:
+    js/datarequestpackaging.js: { }
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/drupalSettings
+    - core/once
+    - core/drupal.ajax

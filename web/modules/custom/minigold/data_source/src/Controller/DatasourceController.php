@@ -77,7 +77,7 @@ class DatasourceController extends ControllerBase {
     $statusesColor = StatusRequest::STATUSCOLOR;
     $request = $this->requestStack->getCurrentRequest();
     $dt_params = $request->query->all();
-
+    $status_can_edit = $this->dataSourceService->allowEditOnprocess($table_name);
     // Get table fields and validate table existence
     $field_id = $this->dataSourceService->getTableFieldsId($table_name);
     $field_data = $this->dataSourceService->getTableFields($table_name);
@@ -105,7 +105,7 @@ class DatasourceController extends ControllerBase {
 
     // Format data rows
     $editable = !empty($dt_params['editable']) && $dt_params['editable'] == 1;
-    $view_detail = !empty($dt_params['view_detail']) && $dt_params['view_detail'] == 1;
+    $view_detail = !empty($dt_params['hasdetail']) && $dt_params['hasdetail'] == 1;
     $deletable = !empty($dt_params['deletable']) && $dt_params['deletable'] == 1;
     if ($editable){
       $canEdit = 1;
@@ -117,10 +117,16 @@ class DatasourceController extends ControllerBase {
     }else{
       $canDelete = 0;
     }
+    $has_expressions = $this->dataSourceService->getTableExpression($table_name);
+    if (!empty($has_expressions)){
+      foreach ($has_expressions as $Expression){
+        $field_data[] = $Expression['alias'];
+      }
+    }
     foreach ($result['records'] as $record) {
       foreach ($field_data as $field) {
         if (str_starts_with($field, 'status')) {
-          if ($record->{$field} > 0){
+          if ($record->{$field} > $status_can_edit){
             $canEdit = 0;
             $canDelete = 0;
           }else{
@@ -130,7 +136,9 @@ class DatasourceController extends ControllerBase {
         }
       }
       $row = [];
-      $row[] = '';
+      if ($view_detail){
+        $row[] = '';
+      }
       // Add edit button if requested
       if ($editable) {
         if ($canEdit) {
@@ -145,9 +153,6 @@ class DatasourceController extends ControllerBase {
         }else{
           $row[] = '<div class="disable-icon-edit"><a title="record lock" data-id="' . $record->{$field_id} . '" class="lock-icon icon-danger" href="#"><i class="fa-solid fa-lock"></i></a></div>';
         }
-      }
-      if ($view_detail){
-        $row[] = '<div class="icon-edit"><a title="click to view detail request" data-id="' . $record->{$field_id} . '" class="detail-icon" href="#"><i class="fa-solid fa-play"></i></a></div>';
       }
       // Add all fields to the row
       foreach ($field_data as $field) {
@@ -178,6 +183,11 @@ class DatasourceController extends ControllerBase {
         } else if (str_starts_with($field, 'file_id')) {
           $file_link = '<div class="d-grid status-cell">'.$this->fileLinkGenerator->renderLink($record->{$field}).'</div>';
           $row[] = $file_link;
+        } else if (str_starts_with($field, 'stock')) {
+          if (empty($record->{$field})){
+            $record->{$field} = 0;
+          }
+          $row[] = '<div id="'.$record->{$field_id}.'" class="stock-editable">'.$record->{$field}.'</div>';
         } else {
           $row[] = $record->{$field};
         }
@@ -202,6 +212,14 @@ class DatasourceController extends ControllerBase {
    */
   protected function mapDataTablesParams(array $dt_params, array $fields) {
     $params = [];
+    // get table if has expressions
+    $has_expressions = $this->dataSourceService->getTableExpression($dt_params['table_name']);
+    if (!empty($has_expressions)){
+      foreach ($has_expressions as $Expression){
+        $fields[] = $Expression['alias'];
+      }
+    }
+
     // Search value
     $params['search_value'] = !empty($dt_params['search']['value']) ? $dt_params['search']['value'] :
       (!empty($dt_params['sSearch']) ? $dt_params['sSearch'] : NULL);
@@ -221,6 +239,7 @@ class DatasourceController extends ControllerBase {
         }else{
           $sort_index = max(0, $sort_index - 1);
         }
+        $params['view_detail'] = 1;
       }else{
         if (!empty($dt_params['editable']) && $dt_params['editable'] == 1) {
           $sort_index = max(0, $sort_index - 2);
@@ -229,6 +248,7 @@ class DatasourceController extends ControllerBase {
         }
       }
       $params['order_by'] = isset($fields[$sort_index]) ? $fields[$sort_index] : $fields[0];
+      $params['order_index'] = $sort_index;
       $params['order_direction'] = isset($dt_params['order'][0]['dir']) ?
         strtoupper($dt_params['order'][0]['dir']) : 'ASC';
     }

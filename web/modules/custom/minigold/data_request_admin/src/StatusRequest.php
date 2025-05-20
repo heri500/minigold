@@ -12,7 +12,8 @@ final class StatusRequest {
     2 => 'Partially Complete',
     3 => 'Complete',
     4 => 'On Packaging',
-    5 => 'Delivered',
+    5 => 'Delivered to Stock',
+    6 => 'Delivered To Customer',
   ];
   public const STATUSCOLOR = [
     0 => 'danger',
@@ -21,5 +22,6 @@ final class StatusRequest {
     3 => 'success',
     4 => 'info',
     5 => 'primary',
+    6 => 'primary disabled',
   ];
 }

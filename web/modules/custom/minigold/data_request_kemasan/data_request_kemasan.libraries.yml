@@ -1,0 +1,11 @@
+# Custom library for general purposes.
+datarequestkemasan_js:
+  version: 1.x
+  js:
+    js/datarequestkemasan.js: { }
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/drupalSettings
+    - core/once
+    - core/drupal.ajax

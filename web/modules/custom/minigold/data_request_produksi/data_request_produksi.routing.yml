@@ -36,3 +36,13 @@ data_request_produksi.detail_request:
   requirements:
     _permission: 'access data request produksi'
     id: \d+   # Only allow numeric IDs
+
+data_request_produksi.delete_ajax:
+  path: '/data-request-produksi/delete/{id}'
+  defaults:
+    _controller: 'Drupal\data_request_produksi\Controller\DataRequestProduksiController::deleteRequestProduksi'
+  requirements:
+    _permission: 'administer data request produksi'
+    id: '\d+'  # Ensure ID is a number
+  options:
+    no_cache: TRUE

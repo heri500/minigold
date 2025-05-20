@@ -2,19 +2,17 @@ data_product.table:
   path: '/dataproduct/table'
   defaults:
     _controller: '\Drupal\data_product\Controller\DataProductController::Table'
-    _title: 'Data Product'
+    _title: 'Data Stock Product'
   requirements:
     _permission: 'access data product'
   options:
     no_cache: TRUE
 
-data_product.add_product:
-  path: '/dataproduct/add/{id}'
+data_product.update_stock:
+  path: '/data_product/update-stock'
   defaults:
-    _controller: 'Drupal\data_product\Controller\DataProductController::addProductForm'
+    _controller: '\Drupal\data_product\Controller\DataProductController::updateStock'
+    _title: 'Update Product Stock'
   requirements:
     _permission: 'admin data product'
-    id: '\d+'  # Ensure ID is a number
-  options:
-    no_cache: TRUE
-
+  methods: [POST]

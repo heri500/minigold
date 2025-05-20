@@ -1,0 +1,7 @@
+access request packaging:
+  title: 'access request packaging'
+  description: 'Hak akses untuk melihat data request packaging'
+
+administer request packaging:
+  title: 'administer request packaging'
+  description: 'Hak akses untuk memanage data request packaging'

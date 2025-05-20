@@ -81,6 +81,10 @@ final class EditRequestProduction extends FormBase {
           '#type' => 'hidden',
           '#value' => $request_data->id_request_produksi ?? '',
         ];
+        $form['id_production_process'] = [
+          '#type' => 'hidden',
+          '#value' => $request_data->id_production_process ?? '',
+        ];
         $requestDate = new \DateTime($query->tgl_request_produksi);
         $table_name = 'request_produksi_detail';
         $field_data = $this->dataSourceService->getTableFields($table_name);
@@ -235,6 +239,7 @@ final class EditRequestProduction extends FormBase {
     $tgl_request = $form_state->getValue('tgl_request');
     $date = new \DateTime($tgl_request);
     $values['id_request'] = json_decode($form_state->getValue('id'));
+    $values['id_production_process'] = $form_state->getValue('id_production_process');
     $values['tgl_request'] = $date->format('Y-m-d H:i:s');;
     $values['detail_produksi'] = $form_state->getValue('edit_request_produksi_table');
     $values['keterangan_produksi'] = $form_state->getValue('keterangan_produksi');

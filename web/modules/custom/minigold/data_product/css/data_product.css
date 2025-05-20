@@ -1,0 +1,58 @@
+/**
+ * @file
+ * CSS for the Data Product module.
+ */
+
+/* Style for editable cells */
+.stock-editable {
+  cursor: pointer;
+  background-color: rgba(255, 255, 220, 0.3);
+  transition: background-color 0.3s;
+}
+
+.stock-editable:hover {
+  background-color: rgba(255, 255, 220, 0.7);
+}
+
+/* Style for editable form */
+.editable form {
+  margin: 0;
+  padding: 0;
+}
+
+.editable form input {
+  width: 100%;
+  padding: 4px;
+  margin: 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* Status messages */
+.messages {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  width: 300px;
+}
+
+.messages--success {
+  background-color: #d5fcde;
+  border-color: #2c5435;
+  color: #155724;
+  padding: 12px;
+  margin-bottom: 10px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+}
+
+.messages--error {
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+  color: #721c24;
+  padding: 12px;
+  margin-bottom: 10px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+}

@@ -1,0 +1,48 @@
+data_request_packaging.table:
+  path: '/data-request-packaging/table'
+  defaults:
+    _title: 'Tabel Request Packaging'
+    _controller: '\Drupal\data_request_packaging\Controller\DataRequestPackagingController'
+  requirements:
+    _permission: 'access request packaging'
+
+data_request_packaging.edit_request_packaging:
+  path: '/data-request-packaging/edit-request-packaging'
+  defaults:
+    _title: 'Edit Request Packaging'
+    _form: 'Drupal\data_request_packaging\Form\EditRequestPackaging'
+  requirements:
+    _permission: 'administer request packaging'
+
+data_request_packaging.modal_form:
+  path: '/data-request-packaging/add/{id}'
+  defaults:
+    _controller: '\Drupal\data_request_packaging\Controller\DataRequestPackagingController::modalForm'
+    _title: 'Request Packaging Form'
+    id: 0
+  requirements:
+    _permission: 'administer request packaging'
+  options:
+    _admin_route: TRUE
+    parameters:
+      id:
+        type: integer
+
+data_request_packaging.detail_request:
+  path: '/data-request-packaging/detailrequest/{id}'
+  defaults:
+    _controller: '\Drupal\data_request_packaging\Controller\DataRequestPackagingController::detailRequest'
+    _title: 'Detail Request'
+  requirements:
+    _permission: 'access request packaging'
+    id: \d+   # Only allow numeric IDs
+
+data_request_packaging.delete_ajax:
+  path: '/data-request-packaging/delete/{id}'
+  defaults:
+    _controller: 'Drupal\data_request_packaging\Controller\DataRequestPackagingController::deleteRequestPackaging'
+  requirements:
+    _permission: 'administer request packaging'
+    id: '\d+'  # Ensure ID is a number
+  options:
+    no_cache: TRUE

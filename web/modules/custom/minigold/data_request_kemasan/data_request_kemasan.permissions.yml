@@ -1,0 +1,7 @@
+access request kemasan:
+  title: 'access request kemasan'
+  description: 'Hak akses untuk melihat data request kemasan dari bagian stok ke bagian kemasan'
+
+administer request kemasan:
+  title: 'administer request kemasan'
+  description: 'Hak akses untuk memanage data request kemasan'

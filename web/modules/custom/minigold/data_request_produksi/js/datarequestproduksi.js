@@ -305,6 +305,27 @@
           }
         });
       });
+
+      $(document).off('click.deleteRequestIcon');
+      $(document).on('click.deleteRequestIcon', '.delete-icon', function (e) {
+        e.preventDefault();
+
+        let idRequest = $(this).data('id');
+
+        if (!idRequest) {
+          alert('Error: Missing Request ID.');
+          return;
+        }
+
+        // Construct the URL using drupalSettings
+        let baseUrl = drupalSettings.path.baseUrl || '/';
+        let deleteUrl = baseUrl + 'data-request-produksi/delete/' + idRequest;
+        const deleteConfirmation = confirm('Yakin ingin menghapus request produksi ini...??!');
+        if (deleteConfirmation) {
+          window.location.href = deleteUrl;
+        }
+      });
+
     }
   }
 })(jQuery, Drupal, once);

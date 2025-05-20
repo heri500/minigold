@@ -13,7 +13,6 @@ use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\data_source\Service\FileLinkGenerator;
 use Drupal\data_source\Service\DataSourceService;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -208,4 +207,37 @@ final class DataRequestProduksiController extends ControllerBase {
     }
     return new JsonResponse($data);
   }
+
+  public function deleteRequestProduksi($id = NULL) {
+    if (!empty($id)) {
+      $fieldsid_data = ['field' => 'id_request_produksi', 'value' => $id];
+      // Delete all existing detail records for this request
+      $query = $this->dataSourceService->fetchRecordsById('request_produksi', ['id_request_produksi'], $id);
+      if (!empty($query)) {
+        // Delete all existing detail records for this request
+        $this->dataSourceService->deleteTableById('request_produksi_detail',$fieldsid_data);
+
+        // Get Request Admin ID related to Request Produksi
+        $query = $this->dataSourceService->fetchRecordsById('request_admin_produksi', ['id_request_admin'], $id);
+        if (!empty($query)){
+          $RequestAdminId = $query->id_request_admin;
+          // Delete the main request
+          $this->dataSourceService->deleteTableById('request_admin_produksi',$fieldsid_data);
+          if (!empty($RequestAdminId)) {
+            // Update Request Admin Status
+            $fieldsid_data2 = ['field' => 'id_request_admin', 'value' => $RequestAdminId];
+            $request_data = ['status_request' => 0];
+            $this->dataSourceService->updateTable('request_admin', $request_data, $fieldsid_data2);
+          }
+        }
+        // Delete Request Admin Produksi
+        $this->dataSourceService->deleteTableById('request_produksi',$fieldsid_data);
+      }
+      // Set drupal message if delete success
+      $this->messenger()->addStatus($this->t('Request has been successfully deleted.'));
+    }
+    // Redirect to the route after deletion
+    return new RedirectResponse(Url::fromRoute('data_request_produksi.table')->toString());
+  }
+
 }

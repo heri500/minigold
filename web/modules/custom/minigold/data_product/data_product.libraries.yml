@@ -1,8 +1,23 @@
 dataproduct_js:
   version: 1.x
   js:
-    js/dataproduct.js: {}
+    js/data_product.js: {}
+  css:
+    component:
+      css/data_product.css: {}
   dependencies:
     - core/jquery
+    - core/once
     - core/drupal
-    - core/drupal.ajax
+    - core/drupalSettings
+    - data_product/jeditable
+
+jeditable:
+  version: 2.0.0
+  license:
+    name: MIT
+    url: https://github.com/NicolasCARPi/jquery_jeditable/blob/master/LICENSE
+  js:
+    js/jquery.jeditable.jquery4.js: {}
+  dependencies:
+    - core/jquery

@@ -2,37 +2,74 @@
 
 namespace Drupal\data_product\Controller;
 
+use Drupal\Core\Ajax\AjaxResponse;
+use Drupal\Core\Ajax\OpenModalDialogCommand;
 use Drupal\Core\Controller\ControllerBase;
-use Symfony\Component\HttpFoundation\Response;
+use Drupal\Core\Form\FormBuilderInterface;
+use Drupal\Core\Link;
+use Drupal\Core\Render\RendererInterface;
+use Drupal\user\Entity\User;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\data_request_admin\Form\AddRequestAdmin;
+use Drupal\Core\Session\AccountInterface;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Drupal\Core\Url;
+use Drupal\data_source\Service\DataSourceService;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\RequestStack;
+
 /**
  * Provides route responses for the Data Cabang module.
  */
 class DataProductController extends ControllerBase {
+  protected $requestStack;
+  /**
+   * The data source service.
+   *
+   * @var \Drupal\data_source\Service\DataSourceService
+   */
+  protected $dataSourceService;
 
+  public function __construct(
+    AccountInterface $current_user,
+    DataSourceService $data_source_service, RequestStack $request_stack
+  ) {
+    $this->currentUser = $current_user;
+    $this->dataSourceService = $data_source_service;
+    $this->requestStack = $request_stack;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('current_user'),
+      $container->get('data_source.service'),
+      $container->get('request_stack')
+    );
+  }
   /**
    * Returns the DataTables table.
    */
   public function table() {
     $header = [
-      ['data' => '', 'datatable_options' => ['data-orderable' => 'false', 'class' => 'no-sort', 'searchable' => 'false']],
-      ['data' => t('ID'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'false']],
-      ['data' => t('Brand'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'true']],
-      ['data' => t('Finest'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'false']],
-      ['data' => t('Series'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'true']],
-      ['data' => t('Tahun Release'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'false']],
-      ['data' => t('Product Name'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'true']],
-      ['data' => t('Gramasi'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'false']],
-      ['data' => t('Ukuran'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'false']],
-      ['data' => t('Finishing'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'true']],
-      ['data' => t('Kategori'), 'datatable_options' => ['data-orderable' => 'true', 'searchable' => 'false']],
+      ['data' => t('ID'), 'data-orderable' => 'true', 'data-dt-order' => 'enable', 'data-searchable' => 'true'],
+      ['data' => t('Brand'), 'data-orderable' => 'true', 'data-dt-order' => 'enable', 'data-searchable' => 'true'],
+      ['data' => t('Finest'), 'data-orderable' => 'true', 'data-dt-order' => 'enable', 'data-searchable' => 'true'],
+      ['data' => t('Series'), 'data-orderable' => 'true', 'data-dt-order' => 'enable', 'data-searchable' => 'true'],
+      ['data' => t('Tahun'), 'data-orderable' => 'true', 'data-dt-order' => 'enable', 'data-searchable' => 'true'],
+      ['data' => t('Product Name'), 'data-orderable' => 'true', 'data-dt-order' => 'enable', 'data-searchable' => 'true'],
+      ['data' => t('Gramasi'), 'data-orderable' => 'true', 'data-dt-order' => 'enable', 'data-searchable' => 'true'],
+      ['data' => t('Ukuran'), 'data-orderable' => 'true', 'data-dt-order' => 'enable', 'data-searchable' => 'true'],
+      ['data' => t('Finishing'), 'data-orderable' => 'true', 'data-dt-order' => 'enable', 'data-searchable' => 'true'],
+      ['data' => t('Stock'), 'data-orderable' => 'true', 'data-dt-order' => 'enable', 'data-searchable' => 'false'],
     ];
 
     $rows = [];
     $rowData = array_fill(0, count($header), '');
     $rows[] = $rowData;
 
-    $Prefix = '<div class="col"><a id="add-new-cabang" href="#" class="btn btn-primary btn-sm">TAMBAH PRODUK</a></div>';
-    $Prefix .= '<div class="col">&nbsp;</div>';
     return [
       '#type' => 'table',
       '#header' => $header,
@@ -43,10 +80,10 @@ class DataProductController extends ControllerBase {
         'style' => 'width: 100%',
       ],
       '#datatable_options' => $this->getDataTableOptions(),
-      '#prefix' => $Prefix,
       '#attached' => [
         'library' => [
           'data_product/dataproduct_js', // Define the library in the module's *.libraries.yml file.
+          'data_product/jeditable',
         ],
       ],
     ];
@@ -59,7 +96,8 @@ class DataProductController extends ControllerBase {
     return [
       'info' => TRUE,
       'stateSave' => TRUE,
-      'ajax' => base_path() . 'datasource/getdata/product?editable=1',
+      'destroy' => TRUE,
+      'ajax' => base_path() . 'datasource/getdata/product?editable=0&view_detail=0&deletable=0',
       'processing' => TRUE,
       'serverSide' => TRUE,
       'paginationType' => 'full_numbers',
@@ -68,19 +106,77 @@ class DataProductController extends ControllerBase {
       'order' => [
         [1, 'desc'],
       ],
+      'buttons' => ['copy', 'csv', 'excel', 'pdf', 'print'],
+      'layout' => ['topStart' => 'buttons'],
     ];
   }
+
   /**
-   * Returns the AddCabangForm as plain HTML for a modal dialog.
+   * Updates the product stock.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The request object.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   A JSON response.
    */
-  public function addProductForm($id = NULL) {
-    // Pass $id to the form for editing mode
-    $form = \Drupal::formBuilder()->getForm(\Drupal\data_cabang\Form\AddCabangForm::class, $id);
+  public function updateStock() {
+    // Get the product ID and stock value from the request
+    $request = $this->requestStack->getCurrentRequest();
+    $request_data = $request->request->all();
+    $id_product = $request_data['id_product'];
+    $stock = $request_data['stock'];
+    // Validate input
+    if (empty($id_product) || !is_numeric($stock)) {
+      return new JsonResponse([
+        'success' => FALSE,
+        'message' => 'Invalid product ID or stock value.',
+      ]);
+    }
 
-    // Render the form as plain HTML
-    $rendered_form = \Drupal::service('renderer')->renderPlain($form);
+    try {
+      // Check if a record already exists for this product
+      $exists = $this->dataSourceService->recordExists('product_stock', 'id_product', $id_product);
+      if ($exists) {
+        // Update existing record
+        $fieldsid_data = ['field' => 'id_product', 'value' => $id_product];
+        $field_update = [
+          'stock' => $stock,
+          'uid_changed' => $this->currentUser->id(),
+          'changed' => date('Y-m-d H:i:s'),
+        ];
+        $result = $this->dataSourceService->updateTable(
+          'product_stock', $field_update, $fieldsid_data
+        );
+      } else {
+        // Insert new record
+        $result = $this->dataSourceService->insertTable(
+          'product_stock',
+          [
+            'id_product' => $id_product,
+            'stock' => $stock,
+            'uid_created' => $this->currentUser->id(),
+          ]
+        );
+      }
 
-    // Return the form HTML in a Response
-    return new Response($rendered_form);
+      if ($result !== FALSE) {
+        return new JsonResponse([
+          'success' => TRUE,
+          'message' => 'Stock updated successfully.',
+        ]);
+      } else {
+        return new JsonResponse([
+          'success' => FALSE,
+          'message' => 'Failed to update stock in the database.',
+        ]);
+      }
+    }
+    catch (\Exception $e) {
+      return new JsonResponse([
+        'success' => FALSE,
+        'message' => 'An error occurred: ' . $e->getMessage(),
+      ]);
+    }
   }
 }

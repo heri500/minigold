@@ -184,6 +184,13 @@ class DataSourceService {
     if (!empty($params['range']) && isset($params['range']['start']) && isset($params['range']['length'])) {
       $query->range($params['range']['start'], $params['range']['length']);
     }
+    //TBD : add expression if table has expression need to execute
+    $table_expression = $this->getTableExpression($table_name);
+    if (!empty($table_expression) && is_array($table_expression)){
+      foreach ($table_expression as $idx => $Expression){
+        $query->addExpression($Expression['expression'], $Expression['alias']);
+      }
+    }
 
     // Execute and get records
     $records = $query->execute()->fetchAll();
@@ -207,6 +214,13 @@ class DataSourceService {
       $db_and = $query->andConditionGroup();
       $db_and->condition($field_id, $id_value);
       $query->condition($db_and);
+    }
+    // Get table expression if any
+    $has_expressions = $this->getTableExpression($table_name);
+    if (!empty($has_expressions)){
+      foreach ($has_expressions as $Expression){
+        $query->addExpression($Expression['expression'], $Expression['alias']);
+      }
     }
     // Execute and get records
     return $query->execute()->fetchObject();
@@ -390,82 +404,96 @@ class DataSourceService {
   public function saveRequestProduction(array $values){
     $transaction = $this->database->startTransaction();
     try {
-      //Save Request Production
-      $request_produksi = [
-        'tgl_request_produksi' => $values['tgl_request'],
-        'keterangan' => $values['keterangan_produksi'],
-        'uid_request' => $this->currentUser->id(),
+      //Save Production Process Data
+      $production_process = [
+        'tgl_start' => $values['tgl_request'],
+        'uid_created' => $this->currentUser->id(),
       ];
-      $id_request_produksi = $this->insertTable('request_produksi', $request_produksi);
-      if (!empty($id_request_produksi)) {
-        if (!empty($values['detail_produksi'])) {
-          foreach ($values['detail_produksi'] as $dataDetailProduksi) {
-            $DetailProduksi = [
-              'id_request_produksi' => $id_request_produksi,
-              'produk_produksi' => 'Kepingan ' . $dataDetailProduksi['gramasi'],
-              'gramasi' => $dataDetailProduksi['gramasi'],
-              'total_qty' => $dataDetailProduksi['total_qty'],
-              'total_qty_actual' => $dataDetailProduksi['requested_qty_keping'],
-            ];
-            $this->insertTable('request_produksi_detail', $DetailProduksi);
+      $id_production_process = $this->insertTable('request_production_process', $production_process);
+      if (!empty($id_production_process)) {
+        //Save Request Production
+        $request_produksi = [
+          'tgl_request_produksi' => $values['tgl_request'],
+          'keterangan' => $values['keterangan_produksi'],
+          'uid_request' => $this->currentUser->id(),
+          'id_production_process' => $id_production_process,
+        ];
+        $id_request_produksi = $this->insertTable('request_produksi', $request_produksi);
+        if (!empty($id_request_produksi)) {
+          if (!empty($values['detail_produksi'])) {
+            foreach ($values['detail_produksi'] as $dataDetailProduksi) {
+              $DetailProduksi = [
+                'id_request_produksi' => $id_request_produksi,
+                'produk_produksi' => 'Kepingan ' . $dataDetailProduksi['gramasi'],
+                'gramasi' => $dataDetailProduksi['gramasi'],
+                'total_qty' => $dataDetailProduksi['total_qty'],
+                'total_qty_actual' => $dataDetailProduksi['requested_qty_keping'],
+              ];
+              $this->insertTable('request_produksi_detail', $DetailProduksi);
+            }
+          }
+          //Save Request Admin Production
+          if (!empty($values['ids_request'])) {
+            foreach ($values['ids_request'] as $idRequestAdmin) {
+              $RequestAdminProduksi = [
+                'id_request_admin' => $idRequestAdmin,
+                'id_request_produksi' => $id_request_produksi,
+              ];
+              $this->insertTable('request_admin_produksi', $RequestAdminProduksi);
+            }
           }
         }
-        //Save Request Admin Production
-        if (!empty($values['ids_request'])) {
-          foreach ($values['ids_request'] as $idRequestAdmin) {
-            $RequestAdminProduksi = [
-              'id_request_admin' => $idRequestAdmin,
-              'id_request_produksi' => $id_request_produksi,
-            ];
-            $this->insertTable('request_admin_produksi', $RequestAdminProduksi);
-          }
-        }
-      }
-      //End Save Request Production
+        //End Save Request Production
 
-      //Save Request Kemasan
-      $request_kemasan = [
-        'tgl_request_kemasan' => $values['tgl_request'],
-        'keterangan' => $values['keterangan_kemasan'],
-        'uid_request' => $this->currentUser->id(),
-      ];
-      $id_request_kemasan = $this->insertTable('request_kemasan', $request_kemasan);
-      if (!empty($id_request_kemasan)) {
-        if (!empty($values['detail_kemasan'])) {
-          foreach ($values['detail_kemasan'] as $dataDetailKemasan) {
-            $DetailKemasan = [
-              'id_request_kemasan' => $id_request_kemasan,
-              'id_product' => $dataDetailKemasan['id_product'],
-              'total_qty' => $dataDetailKemasan['total_qty'],
-              'total_qty_actual' => $dataDetailKemasan['requested_qty_kemasan'],
-            ];
-            $this->insertTable('request_kemasan_detail', $DetailKemasan);
+        //Save Request Kemasan
+        $request_kemasan = [
+          'tgl_request_kemasan' => $values['tgl_request'],
+          'keterangan' => $values['keterangan_kemasan'],
+          'uid_request' => $this->currentUser->id(),
+          'id_production_process' => $id_production_process,
+        ];
+        $id_request_kemasan = $this->insertTable('request_kemasan', $request_kemasan);
+        if (!empty($id_request_kemasan)) {
+          if (!empty($values['detail_kemasan'])) {
+            foreach ($values['detail_kemasan'] as $dataDetailKemasan) {
+              $DetailKemasan = [
+                'id_request_kemasan' => $id_request_kemasan,
+                'id_product' => $dataDetailKemasan['id_product'],
+                'total_qty' => $dataDetailKemasan['total_qty'],
+                'total_qty_actual' => $dataDetailKemasan['requested_qty_kemasan'],
+              ];
+              $this->insertTable('request_kemasan_detail', $DetailKemasan);
+            }
+          }
+          //Save Request Admin Kemasan
+          if (!empty($values['ids_request'])) {
+            foreach ($values['ids_request'] as $idRequestAdmin) {
+              $RequestAdminKemasan = [
+                'id_request_admin' => $idRequestAdmin,
+                'id_request_kemasan' => $id_request_kemasan,
+              ];
+              $this->insertTable('request_admin_kemasan', $RequestAdminKemasan);
+            }
           }
         }
-        //Save Request Admin Kemasan
-        if (!empty($values['ids_request'])) {
-          foreach ($values['ids_request'] as $idRequestAdmin) {
-            $RequestAdminKemasan = [
-              'id_request_admin' => $idRequestAdmin,
-              'id_request_kemasan' => $id_request_kemasan,
-            ];
-            $this->insertTable('request_admin_kemasan', $RequestAdminKemasan);
-          }
-        }
-      }
-      //End Save Request Kemasan
+        //End Save Request Kemasan
 
-      //Update Request Admin
-      if (!empty($values['ids_request'])) {
-        foreach ($values['ids_request'] as $idRequestAdmin) {
-          $RequestAdmin = [
-            'status_request' => 1,
-          ];
-          $fieldsid_data = [
-            'field' => 'id_request_admin',
-            'value' => $idRequestAdmin,
-          ];
-          $this->updateTable('request_admin', $RequestAdmin,$fieldsid_data);
+        //Update Request Admin
+        if (!empty($values['ids_request'])) {
+          //Update Request Admin id_production_process and status
+          foreach ($values['ids_request'] as $idRequestAdmin) {
+            $RequestAdmin = [
+              'status_request' => 1,
+              'id_production_process' => $id_production_process,
+              'changed' => date('Y-m-d H:i:s'),
+              'uid_changed' => $this->currentUser->id(),
+            ];
+            $fieldsid_data = [
+              'field' => 'id_request_admin',
+              'value' => $idRequestAdmin,
+            ];
+            $this->updateTable('request_admin', $RequestAdmin, $fieldsid_data);
+          }
         }
       }
       return $values['ids_request'];
@@ -499,17 +527,81 @@ class DataSourceService {
           'value' => $values['id_request'],
         ];
         $this->updateTable('request_produksi', $request_produksi, $fieldsid_data);
+        // Check if request_packaging is exists or not
+        $CreatePackaging = false;
+        $field_data = $this->getTableFields('request_packaging');
+        $field_value[] = ['id_production_process' => $values['id_production_process']];
+        $query = $this->fetchRecordsByField('request_packaging', $field_data, $field_value,[],[],[]);
+        $idRequestPackaging  = 0;
+        if ($values['status_produksi'] == 4) {
+          if (empty($query)) {
+            $CreatePackaging = true;
+          } else {
+            if (!empty($query[0]->id_request_packaging)) {
+              $idRequestPackaging = $query[0]->id_request_packaging;
+            } else {
+              $CreatePackaging = true;
+            }
+          }
+        }
+        if ($CreatePackaging){
+          // If status 4 (On Packaging) then auto create request packaging data
+          $data_packaging = [
+            'id_request_produksi' => $values['id_request'],
+            'tgl_request_from_produksi' => date('Y-m-d H:i:s'),
+            'uid_created' => $this->currentUser->id(),
+            'id_production_process' => $values['id_production_process'],
+          ];
+          $idPackaging = $this->insertTable('request_packaging', $data_packaging);
+        }else{
+          //if request packing exists then update
+          if (!empty($idRequestPackaging)) {
+            $data_packaging = [
+              'id_request_produksi' => $values['id_request'],
+              'tgl_request_from_produksi' => date('Y-m-d H:i:s'),
+              'uid_changed' => $this->currentUser->id(),
+              'changed' => date('Y-m-d H:i:s'),
+            ];
+            $fieldsid_data = [
+              'field' => 'id_request_packaging',
+              'value' => $idRequestPackaging,
+            ];
+            $this->updateTable('request_packaging', $data_packaging, $fieldsid_data);
+          }
+        }
         foreach ($values['detail_produksi'] as $DetailProduksi){
           $fieldsid_data = [
             'field' => 'id_request_produksi_detail',
-            'value' => $values['id_request_detail'],
+            'value' => $DetailProduksi['id_request_detail'],
           ];
           $request_detail_produksi = [
-            'total_qty' => $values['total_qty'],
+            'total_qty' => $DetailProduksi['total_qty'],
             'uid_changed' => $this->currentUser->id(),
             'changed' => date('Y-m-d H:i:s'),
           ];
           $this->updateTable('request_produksi_detail', $request_detail_produksi, $fieldsid_data);
+          if ($CreatePackaging && !empty($idPackaging)){
+            // If status 4 (On Packaging) then auto create request packaging detail data
+            $data_detail_packaging = [
+              'id_request_packaging' => $idPackaging,
+              'produk_produksi' => 'Kepingan ' .$DetailProduksi['gramasi'],
+              'qty_keping' => $DetailProduksi['total_qty'],
+              'final_qty_product' => $DetailProduksi['total_qty'],
+              'uid_created' => $this->currentUser->id(),
+            ];
+            $this->insertTable('request_packaging_detail', $data_detail_packaging);
+          }else{
+            if ($values['status_produksi'] == 4 && !empty($idRequestPackaging)) {
+              $data_detail_packaging = [
+                'id_request_packaging' => $idRequestPackaging,
+                'produk_produksi' => 'Kepingan ' .$DetailProduksi['id_product'],
+                'qty_keping' => $DetailProduksi['total_qty'],
+                'final_qty_product' => $DetailProduksi['total_qty'],
+                'uid_created' => $this->currentUser->id(),
+              ];
+              $this->insertTable('request_packaging_detail', $data_detail_packaging);
+            }
+          }
         }
         //End Save Request Production
         return $values['id_request'];
@@ -524,6 +616,226 @@ class DataSourceService {
     }else{
       $messages = t('Request Production ID is empty');
       \Drupal::logger('data_request_admin')->error('Error saving request production: @message', ['@message' => $messages]);
+      return FALSE;
+    }
+  }
+
+  /**
+   * @param array $values
+   * @return void
+   */
+  public function updateRequestKemasan(array $values){
+    if (!empty($values['id_request'])) {
+      $transaction = $this->database->startTransaction();
+      try {
+        //Update Request Production
+        $request_kemasan = [
+          'keterangan' => $values['keterangan_kemasan'],
+          'uid_changed' => $this->currentUser->id(),
+          'changed' => date('Y-m-d H:i:s'),
+          'status_kemasan' => $values['status_kemasan']
+        ];
+        $fieldsid_data = [
+          'field' => 'id_request_kemasan',
+          'value' => $values['id_request'],
+        ];
+        $this->updateTable('request_kemasan', $request_kemasan, $fieldsid_data);
+        $CreatePackaging = false;
+        // Check if request_packaging is exists or not
+        $field_data = $this->getTableFields('request_packaging');
+        $field_value[] = ['id_production_process' => $values['id_production_process']];
+        $query = $this->fetchRecordsByField('request_packaging', $field_data, $field_value,[],[],[]);
+        $idRequestPackaging  = 0;
+        if ($values['status_kemasan'] == 4) {
+          if (empty($query)) {
+            $CreatePackaging = true;
+          } else {
+            if (!empty($query[0]->id_request_packaging)) {
+              $idRequestPackaging = $query[0]->id_request_packaging;
+            } else {
+              $CreatePackaging = true;
+            }
+          }
+        }
+        if ($CreatePackaging){
+          // If status 4 (On Packaging) then auto create request packaging data
+          $data_packaging = [
+            'id_request_kemasan' => $values['id_request'],
+            'tgl_request_from_kemasan' => date('Y-m-d H:i:s'),
+            'uid_created' => $this->currentUser->id(),
+            'id_production_process' => $values['id_production_process'],
+          ];
+          $idPackaging = $this->insertTable('request_packaging', $data_packaging);
+        }else{
+          //if request packing exists then update
+          if (!empty($idRequestPackaging)) {
+            $data_packaging = [
+              'id_request_kemasan' => $values['id_request'],
+              'tgl_request_from_kemasan' => date('Y-m-d H:i:s'),
+              'uid_changed' => $this->currentUser->id(),
+              'changed' => date('Y-m-d H:i:s'),
+            ];
+            $fieldsid_data = [
+              'field' => 'id_request_packaging',
+              'value' => $idRequestPackaging,
+            ];
+            $this->updateTable('request_packaging', $data_packaging, $fieldsid_data);
+          }
+        }
+        foreach ($values['detail_kemasan'] as $DetailKemasan){
+          $fieldsid_data = [
+            'field' => 'id_request_kemasan_detail',
+            'value' => $DetailKemasan['id_request_detail'],
+          ];
+          $request_detail_kemasan = [
+            'total_qty' => $DetailKemasan['total_qty'],
+            'uid_changed' => $this->currentUser->id(),
+            'changed' => date('Y-m-d H:i:s'),
+          ];
+          $this->updateTable('request_kemasan_detail', $request_detail_kemasan, $fieldsid_data);
+          if ($CreatePackaging && !empty($idPackaging)){
+            // If status 4 (On Packaging) then auto create request packaging detail data
+            $data_detail_packaging = [
+              'id_request_packaging' => $idPackaging,
+              'id_product' => $DetailKemasan['id_product'],
+              'qty_product' => $DetailKemasan['total_qty'],
+              'final_qty_product' => $DetailKemasan['total_qty'],
+              'uid_created' => $this->currentUser->id(),
+            ];
+            $this->insertTable('request_packaging_detail', $data_detail_packaging);
+          }else{
+            if ($values['status_kemasan'] == 4 && !empty($idRequestPackaging)) {
+              $data_detail_packaging = [
+                'id_request_packaging' => $idRequestPackaging,
+                'id_product' => $DetailKemasan['id_product'],
+                'qty_product' => $DetailKemasan['total_qty'],
+                'final_qty_product' => $DetailKemasan['total_qty'],
+                'uid_created' => $this->currentUser->id(),
+              ];
+              $this->insertTable('request_packaging_detail', $data_detail_packaging);
+            }
+          }
+        }
+        //End Save Request Production
+        return $values['id_request'];
+      } catch (\Exception $e) {
+        // Roll back the transaction if something went wrong
+        if (isset($transaction)) {
+          $transaction->rollBack();
+        }
+        \Drupal::logger('data_request_kemasan')->error('Error saving request kemasan: @message', ['@message' => $e->getMessage()]);
+        return FALSE;
+      }
+    }else{
+      $messages = t('Request Kemasan ID is empty');
+      \Drupal::logger('data_request_kemasan')->error('Error saving request kemasan: @message', ['@message' => $messages]);
+      return FALSE;
+    }
+  }
+
+  public function updateRequestPackaging(array $values){
+    if (!empty($values['id_request'])) {
+      $transaction = $this->database->startTransaction();
+      try {
+        //Update Request Production
+        $request_packaging = [
+          'keterangan' => $values['keterangan_packaging'],
+          'uid_changed' => $this->currentUser->id(),
+          'changed' => date('Y-m-d H:i:s'),
+          'status_packaging' => $values['status_packaging']
+        ];
+        $fieldsid_data = [
+          'field' => 'id_request_packaging',
+          'value' => $values['id_request'],
+        ];
+        $this->updateTable('request_packaging', $request_packaging, $fieldsid_data);
+        $UpdateStock = false;
+        // Check if status update is delivered to stock (5)
+        if ($values['status_packaging'] == 5) {
+          $UpdateStock = true;
+        }
+        foreach ($values['detail_packaging'] as $DetailPackaging){
+          $fieldsid_data = [
+            'field' => 'id_request_packaging_detail',
+            'value' => $DetailPackaging['id_request_detail'],
+          ];
+          $request_detail_packaging = [
+            'final_qty_product' => $DetailPackaging['qty_packaging'],
+            'uid_changed' => $this->currentUser->id(),
+            'changed' => date('Y-m-d H:i:s'),
+          ];
+          $this->updateTable('request_packaging_detail', $request_detail_packaging, $fieldsid_data);
+          if ($UpdateStock && !empty($DetailPackaging['id_product'])){
+            // Check if id_product exists in product_stock, if not create new record, if exists just update stock
+            $field_data = $this->getTableFields('product_stock');
+            $field_value = [];
+            $field_value[] = ['id_product' => $DetailPackaging['id_product']];
+            $query = $this->fetchRecordsByField('product_stock', $field_data, $field_value,[],[],[]);
+            // If status 5 (Delivered to stock) then update or insert stock product
+            if (!empty($query) && !empty($query[0]->id_product)){
+              $fieldsid_stock = [
+                'field' => 'id_product',
+                'value' => $DetailPackaging['id_product'],
+              ];
+              $data_stock = [
+                'stock' => (int)$query[0]->stock + (int)$DetailPackaging['qty_packaging'],
+                'uid_changed' => $this->currentUser->id(),
+                'changed' => date('Y-m-d H:i:s'),
+              ];
+              $this->updateTable('product_stock', $data_stock, $fieldsid_stock);
+            }else {
+              $data_stock = [
+                'id_product' => $DetailPackaging['id_product'],
+                'stock' => $DetailPackaging['qty_packaging'],
+                'uid_created' => $this->currentUser->id(),
+              ];
+              $this->insertTable('product_stock', $data_stock);
+            }
+            // Update Request Admin, Request Production, Request Kemasan status
+            $fieldsid_stock = [
+              'field' => 'id_production_process',
+              'value' => $values['id_production_process'],
+            ];
+            $data_update = [
+              'status_request' => $values['status_packaging'],
+              'changed' => date('Y-m-d H:i:s'),
+              'uid_changed' => $this->currentUser->id(),
+            ];
+            $this->updateTable('request_admin', $data_update, $fieldsid_stock);
+            $data_update = [
+              'status_kemasan' => $values['status_packaging'],
+              'changed' => date('Y-m-d H:i:s'),
+              'uid_changed' => $this->currentUser->id(),
+            ];
+            $this->updateTable('request_kemasan', $data_update, $fieldsid_stock);
+            $data_update = [
+              'status_produksi' => $values['status_packaging'],
+              'changed' => date('Y-m-d H:i:s'),
+              'uid_changed' => $this->currentUser->id(),
+            ];
+            $this->updateTable('request_produksi', $data_update, $fieldsid_stock);
+            // Update production process to complete
+            $data_update = [
+              'tgl_end' => date('Y-m-d H:i:s'),
+              'changed' => date('Y-m-d H:i:s'),
+              'uid_changed' => $this->currentUser->id(),
+            ];
+            $this->updateTable('request_production_process', $data_update, $fieldsid_stock);
+          }
+        }
+        //End Save Request Production
+        return $values['id_request'];
+      } catch (\Exception $e) {
+        // Roll back the transaction if something went wrong
+        if (isset($transaction)) {
+          $transaction->rollBack();
+        }
+        \Drupal::logger('data_request_kemasan')->error('Error saving request kemasan: @message', ['@message' => $e->getMessage()]);
+        return FALSE;
+      }
+    }else{
+      $messages = t('Request Kemasan ID is empty');
+      \Drupal::logger('data_request_kemasan')->error('Error saving request kemasan: @message', ['@message' => $messages]);
       return FALSE;
     }
   }
@@ -560,6 +872,108 @@ class DataSourceService {
   }
 
   /**
+   * Checks if a record exists in a table.
+   *
+   * @param string $table_name
+   *   The name of the table.
+   * @param string $field
+   *   The field name to check.
+   * @param mixed $value
+   *   The value to check for.
+   *
+   * @return bool
+   *   TRUE if the record exists, FALSE otherwise.
+   */
+  public function recordExists($table_name, $field, $value) {
+    try {
+      $query = $this->database->select($table_name, 't');
+      $query->fields('t', [$field]);
+      $query->condition('t.' . $field, $value);
+      $query->range(0, 1);
+
+      $result = $query->execute()->fetchField();
+      return !empty($result);
+    }
+    catch (\Exception $e) {
+      return FALSE;
+    }
+  }
+
+  /**
+   * Updates a record in a table.
+   *
+   * @param string $table_name
+   *   The name of the table.
+   * @param array $fields
+   *   An array of field values to update, keyed by field name.
+   * @param array $conditions
+   *   An array of field conditions, keyed by field name.
+   *
+   * @return bool
+   *   TRUE if the record was updated, FALSE otherwise.
+   */
+  public function updateRecord($table_name, array $fields, array $conditions) {
+    try {
+      $query = $this->database->update($table_name);
+      $query->fields($fields);
+
+      foreach ($conditions as $field => $value) {
+        $query->condition($field, $value);
+      }
+
+      // Add updated timestamp if field exists
+      if (in_array('changed', $this->getTableFields($table_name))) {
+        $query->fields(['changed' => date('Y-m-d H:i:s')]);
+      }
+
+      return $query->execute() ? TRUE : FALSE;
+    }
+    catch (\Exception $e) {
+      return FALSE;
+    }
+  }
+
+  /**
+   * Inserts a record into a table.
+   *
+   * @param string $table_name
+   *   The name of the table.
+   * @param array $fields
+   *   An array of field values to insert, keyed by field name.
+   *
+   * @return bool
+   *   TRUE if the record was inserted, FALSE otherwise.
+   */
+  public function insertRecord($table_name, array $fields) {
+    try {
+      $table_fields = $this->getTableFields($table_name);
+
+      // Add created timestamp if field exists
+      if (in_array('created', $table_fields)) {
+        $fields['created'] = date('Y-m-d H:i:s');
+      }
+
+      // Add changed timestamp if field exists
+      if (in_array('changed', $table_fields)) {
+        $fields['changed'] = date('Y-m-d H:i:s');
+      }
+
+      // Add user ID if field exists
+      if (in_array('uid', $table_fields) && !isset($fields['uid'])) {
+        $fields['uid'] = $this->currentUser->id();
+      }
+
+      $query = $this->database->insert($table_name);
+      $query->fields($fields);
+
+      return $query->execute() ? TRUE : FALSE;
+    }
+    catch (\Exception $e) {
+      return FALSE;
+    }
+  }
+
+  /**
    * Returns the fields for a given table.
    *
    * @param string $table_name
@@ -570,44 +984,91 @@ class DataSourceService {
    */
   public function getTableFields($table_name) {
     $field_data = [];
-
     switch ($table_name) {
       case 'product':
         $field_data = [
           'product_id', 'brand', 'finest', 'series', 'tahun_release',
           'product_name', 'gramasi',
-          'ukuran', 'finishing', 'kategori_produk'
+          'ukuran', 'finishing'
         ];
         break;
       case 'request_admin':
         $field_data = [
           'id_request_admin', 'no_request', 'tgl_request', 'uid_request',
-          'nama_pemesan','keterangan', 'status_request', 'file_id', 'file_attachment',
+          'nama_pemesan','keterangan', 'status_request', 'file_id',
           'uid_changed', 'created', 'changed',
         ];
         break;
       case 'request_admin_detail':
         $field_data = [
           'id_request_admin_detail', 'id_request_admin', 'id_product', 'qty_request', 'status_detail',
-          'uid_created', 'uid_changed', 'created', 'changed'
+          'uid_created', 'uid_changed', 'created', 'changed',
         ];
         break;
       case 'request_produksi':
         $field_data = [
           'id_request_produksi', 'tgl_request_produksi', 'uid_request', 'uid_changed',
-          'keterangan', 'status_produksi', 'created', 'changed',
+          'keterangan', 'status_produksi', 'created', 'changed', 'id_production_process',
         ];
         break;
       case 'request_produksi_detail':
         $field_data = [
           'id_request_produksi_detail', 'id_request_produksi', 'produk_produksi', 'gramasi',
-          'total_qty', 'total_qty_actual', 'status_produksi_produk', 'uid_created', 'created',
+          'total_qty', 'total_qty_actual', 'status_produksi_produk', 'uid_created', 'uid_changed'
+          , 'created', 'changed'
+        ];
+        break;
+      case 'request_kemasan':
+        $field_data = [
+          'id_request_kemasan', 'tgl_request_kemasan', 'uid_request', 'uid_changed',
+          'keterangan', 'status_kemasan', 'created', 'changed', 'id_production_process',
+        ];
+        break;
+      case 'request_kemasan_detail':
+        $field_data = [
+          'id_request_kemasan_detail', 'id_request_kemasan', 'id_product',
+          'total_qty', 'total_qty_actual', 'status_kemasan_produk', 'uid_created', 'uid_changed'
+          , 'created', 'changed'
+        ];
+        break;
+      case 'request_admin_produksi':
+        $field_data = [
+          'id_request_admin', 'id_request_produksi'
+        ];
+        break;
+      case 'request_admin_kemasan':
+        $field_data = [
+          'id_request_admin', 'id_request_kemasan'
+        ];
+        break;
+      case 'request_production_process':
+        $field_data = [
+          'id_production_process', 'tgl_start', 'tgl_end', 'uid_created',
+          'uid_changed', 'created', 'changed',
+        ];
+        break;
+      case 'request_packaging':
+        $field_data = [
+          'id_request_packaging', 'tgl_request_from_kemasan', 'tgl_request_from_produksi',
+          'uid_created', 'uid_changed', 'status_packaging', 'created', 'changed', 'id_production_process',
+          'id_request_produksi', 'id_request_kemasan'
+        ];
+        break;
+      case 'request_packaging_detail':
+        $field_data = [
+          'id_request_packaging_detail', 'id_request_packaging', 'id_product', 'produk_produksi',
+          'qty_product', 'qty_keping', 'final_qty_product', 'uid_created', 'uid_changed'
+          , 'created', 'changed'
+        ];
+        break;
+      case 'product_stock':
+        $field_data = [
+          'id_product', 'stock', 'uid_created', 'uid_changed', 'created', 'changed'
         ];
         break;
       // Add cases for other tables here
 
     }
-
     return $field_data;
   }
   public function getTableFieldsId($table_name) {
@@ -625,6 +1086,21 @@ class DataSourceService {
         break;
       case 'request_produksi':
         $field_id = 'id_request_produksi';
+        break;
+      case 'request_kemasan':
+        $field_id = 'id_request_kemasan';
+        break;
+      case 'request_production_process':
+        $field_id = 'id_production_process';
+        break;
+      case 'request_packaging':
+        $field_id = 'id_request_packaging';
+        break;
+      case 'request_packaging_detail':
+        $field_id = 'id_request_packaging_detail';
+        break;
+      case 'product_stock':
+        $field_id = 'id_product';
         break;
       // Add cases for other tables here
 
@@ -647,7 +1123,8 @@ class DataSourceService {
     switch ($table_name) {
       case 'product':
         $field_data = [
-          'brand', 'series', 'product_name', 'finishing',
+          'product_id', 'gramasi', 'brand', 'series', 'product_name',
+          'finishing', 'ukuran', 'tahun_release'
         ];
         break;
       case 'request_admin':
@@ -665,10 +1142,70 @@ class DataSourceService {
           'tgl_request_produksi', 'keterangan'
         ];
         break;
+      case 'request_kemasan':
+        $field_data = [
+          'tgl_request_kemasan', 'keterangan'
+        ];
+        break;
+      case 'request_production_process':
+        $field_data = [
+          'tgl_start', 'tgl_end'
+        ];
+        break;
       // Add cases for other tables here
     }
 
     return $field_data;
   }
 
+  public function allowEditOnprocess($table_name) {
+    $allow_edit = 0;
+
+    switch ($table_name) {
+      case 'request_admin':
+      case 'request_admin_detail':
+      case 'product':
+        break;
+      case 'request_produksi':
+      case 'request_kemasan':
+        $allow_edit = 3;
+        break;
+      case 'request_packaging':
+        $allow_edit = 4;
+        break;
+      // Add cases for other tables here
+    }
+    return $allow_edit;
+  }
+  public function getTableExpression($table_name) : array {
+    $expressions = [];
+    switch ($table_name) {
+      case 'request_admin':
+        $expressions[] = [
+          'expression' => '(SELECT id_request_produksi FROM request_produksi WHERE id_production_process = ta.id_production_process)',
+          'alias' => 'related_production'
+        ];
+        $expressions[] = [
+          'expression' => '(SELECT status_produksi FROM request_produksi WHERE id_production_process = ta.id_production_process)',
+          'alias' => 'production_status'
+        ];
+        $expressions[] = [
+          'expression' => '(SELECT id_request_kemasan FROM request_kemasan WHERE id_production_process = ta.id_production_process)',
+          'alias' => 'related_kemasan'
+        ];
+        $expressions[] = [
+          'expression' => '(SELECT status_kemasan FROM request_kemasan WHERE id_production_process = ta.id_production_process)',
+          'alias' => 'kemasan_status'
+        ];
+        break;
+      case 'product':
+        $expressions[] = [
+          'expression' => '(SELECT stock FROM product_stock WHERE id_product = ta.product_id)',
+          'alias' => 'stock'
+        ];
+        break;
+      // Add cases for other tables here
+    }
+    return $expressions;
+  }
 }

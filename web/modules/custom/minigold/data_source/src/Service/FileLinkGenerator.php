@@ -50,8 +50,13 @@ class FileLinkGenerator {
     if ($file) {
       $url = $file->createFileUrl(); // or use file_url_generator if preferred
       $filename = Xss::filter($file->getFilename());
-
-      return '<a title="click to open file in new tab" class="btn btn-info btn-xs-text link-file" href="' . $url . '" target="_blank" rel="noopener noreferrer">' . $filename . '</a>';
+      $explode_fn = explode('.', $filename);
+      if (isset($explode_fn[0])) {
+        $short_filename = substr($explode_fn[0], 0,10).'...'.$explode_fn[1];
+      }else{
+        $short_filename = '-';
+      }
+      return '<a title="click to open file in new tab" class="btn btn-info btn-xs-text link-file" href="' . $url . '" target="_blank" rel="noopener noreferrer">' . $short_filename . '</a>';
     }
 
     return 'File not found.';

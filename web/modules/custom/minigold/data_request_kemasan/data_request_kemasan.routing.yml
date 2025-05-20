@@ -1,0 +1,48 @@
+data_request_kemasan.table:
+  path: '/data-request-kemasan/table'
+  defaults:
+    _title: 'Tabel Request Kemasan'
+    _controller: '\Drupal\data_request_kemasan\Controller\DataRequestKemasanController'
+  requirements:
+    _permission: 'access request kemasan'
+
+data_request_kemasan.edit_request_kemasan:
+  path: '/data-request-kemasan/edit-request-kemasan'
+  defaults:
+    _title: 'Edit Request Kemasan'
+    _form: 'Drupal\data_request_kemasan\Form\EditRequestKemasan'
+  requirements:
+    _permission: 'administer request kemasan'
+
+data_request_kemasan.detail_request:
+  path: '/data-request-kemasan/detailrequest/{id}'
+  defaults:
+    _controller: '\Drupal\data_request_kemasan\Controller\DataRequestKemasanController::detailRequest'
+    _title: 'Detail Request'
+  requirements:
+    _permission: 'access request kemasan'
+    id: \d+   # Only allow numeric IDs
+
+data_request_kemasan.modal_form:
+  path: '/data-request-kemasan/add/{id}'
+  defaults:
+    _controller: '\Drupal\data_request_kemasan\Controller\DataRequestKemasanController::modalForm'
+    _title: 'Request Kemasan Form'
+    id: 0
+  requirements:
+    _permission: 'administer request kemasan'
+  options:
+    _admin_route: TRUE
+    parameters:
+      id:
+        type: integer
+
+data_request_kemasan.delete_ajax:
+  path: '/data-request-kemasan/delete/{id}'
+  defaults:
+    _controller: 'Drupal\data_request_kemasan\Controller\DataRequestKemasanController::deleteRequestKemasan'
+  requirements:
+    _permission: 'administer request kemasan'
+    id: '\d+'  # Ensure ID is a number
+  options:
+    no_cache: TRUE

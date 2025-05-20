@@ -12587,7 +12587,7 @@ textarea.form-control-lg {
   box-shadow: 0 0.2rem 0.45rem rgba(0, 0, 0, 0.15), inset 0 -1px 0 rgba(255, 255, 255, 0.15) !important;
 }
 .navbar-nav .nav-link.active, .navbar-nav .nav-link.show {
-  color: var(--bs-highlight-bg);
+  color: #ffd700;
   font-weight: 500;
 }
 .modal-header{
@@ -12784,7 +12784,10 @@ table.table.dataTable.table-striped>tbody>tr.selected>*{
 #request-kemasan-summary-table tbody tr td:first-child,
 #request-produksi-table tbody tr td:first-child,
 #edit-request-produksi-table tr td:first-child,
-#edit-request-produksi-table tr td:nth-child(2){
+#edit-request-produksi-table tr td:nth-child(2),
+#from-request-produksi-table tr td:first-child,
+#edit-request-packaging-table tr td:first-child,
+#edit-request-packaging-table tr td:nth-child(2){
   display: none;
 }
 .left-col {
@@ -12807,8 +12810,13 @@ table.table.dataTable.table-striped>tbody>tr.selected>*{
 .datatable.dataTable{
   border-top: 1px solid #ddd !important;
 }
-.edit-request-produksi-wrapper{
+.edit-request-produksi-wrapper, .edit-request-kemasan-wrapper{
   font-size: 16px;
   max-height: 300px;
+  overflow-y: auto;
+}
+.from-request-produksi-wrapper, .edit-request-packaging-wrapper{
+  font-size: 16px;
+  max-height: 150px;
   overflow-y: auto;
 }
